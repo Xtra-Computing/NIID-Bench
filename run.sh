@@ -1,0 +1,15 @@
+python experiments.py --model=simple-cnn \
+    --dataset=femnist \
+    --alg=scaffold \
+    --lr=0.01 \
+    --batch-size=64 \
+    --epochs=80 \
+    --n_parties=10 \
+    --rho=0.9 \
+    --comm_round=50 \
+    --partition=real \
+    --beta=0.5\
+    --device='cuda:0'\
+    --datadir='./data/' \
+    --logdir='./logs/' \
+    --noise=0
