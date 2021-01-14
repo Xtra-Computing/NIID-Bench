@@ -644,10 +644,15 @@ if __name__ == '__main__':
         global_models, global_model_meta_data, global_layer_type = init_nets(args.net_config, 0, 1, args)
         global_model = global_models[0]
 
-        global_para = get_trainable_parameters(global_model)
+        global_para = global_model.state_dict()
         if args.is_same_initial:
-            for net_id, net in nets.items():
-                put_trainable_parameters(net, global_para)
+            for _, net in nets.items():
+                net.load_state_dict(global_para)
+        # global_para = get_trainable_parameters(global_model)
+
+        # if args.is_same_initial:
+        #     for net_id, net in nets.items():
+        #         put_trainable_parameters(net, global_para)
 
         for round in range(args.comm_round):
             logger.info("in comm round:" + str(round))
@@ -656,10 +661,18 @@ if __name__ == '__main__':
             np.random.shuffle(arr)
             selected = arr[:int(args.n_parties * args.sample)]
 
-            global_para = get_trainable_parameters(global_model)
-            for net_id, net in nets.items():
-                if net_id in selected:
-                    put_trainable_parameters(net, global_para)
+            global_para = global_model.state_dict()
+            if round == 0:
+                if args.is_same_initial:
+                    for idx in selected:
+                        nets[idx].load_state_dict(global_para)
+            else:
+                for idx in selected:
+                    nets[idx].load_state_dict(global_para)
+            # global_para = get_trainable_parameters(global_model)
+            # for net_id, net in nets.items():
+            #     if net_id in selected:
+            #         put_trainable_parameters(net, global_para)
 
             local_train_net(nets, selected, args, net_dataidx_map, test_dl = test_dl_global, device=device)
             # local_train_net(nets, args, net_dataidx_map, local_split=False, device=device)
@@ -667,9 +680,19 @@ if __name__ == '__main__':
             # update global model
             total_data_points = sum([len(net_dataidx_map[r]) for r in selected])
             fed_avg_freqs = [len(net_dataidx_map[r]) / total_data_points for r in selected]
-            weights = [get_trainable_parameters(nets[i].cpu()) for i in selected]
-            average_weight = sum(weights[i] * fed_avg_freqs[i] for i in range(len(selected)))
-            put_trainable_parameters(global_model, average_weight)       
+
+            for idx in range(len(selected)):
+                net_para = nets[selected[idx]].cpu().state_dict()
+                if idx == 0:
+                    for key in net_para:
+                        global_para[key] = net_para[key] * fed_avg_freqs[idx]
+                else:
+                    for key in net_para:
+                        global_para[key] += net_para[key] * fed_avg_freqs[idx]
+            global_model.load_state_dict(global_para)
+            # weights = [get_trainable_parameters(nets[i].cpu()) for i in selected]
+            # average_weight = sum(weights[i] * fed_avg_freqs[i] for i in range(len(selected)))
+            # put_trainable_parameters(global_model, average_weight)
 
 
             logger.info('global n_training: %d' % len(train_dl_global))
