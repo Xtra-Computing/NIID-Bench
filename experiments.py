@@ -378,7 +378,7 @@ def train_net_scaffold(net_id, net, global_model, c_local, c_global, train_datal
                 net_para = net.state_dict()
                 for key in net_para:
                     net_para[key] = net_para[key] - args.lr * (c_global_para[key] - c_local_para[key])
-                # net.load_state_dict(net_para)
+                net.load_state_dict(net_para)
 
                 cnt += 1
                 epoch_loss_collector.append(loss.item())
@@ -394,7 +394,7 @@ def train_net_scaffold(net_id, net, global_model, c_local, c_global, train_datal
     for key in net_para:
         c_new_para[key] = c_new_para[key] - c_global_para[key] + (global_model_para[key] - net_para[key]) / (cnt * args.lr)
         c_delta_para[key] = c_new_para[key] - c_local_para[key]
-    # c_local.load_state_dict(c_new_para)
+    c_local.load_state_dict(c_new_para)
 
 
     train_acc = compute_accuracy(net, train_dataloader, device=device)
@@ -514,7 +514,7 @@ def local_train_net_scaffold(nets, selected, global_model, c_nets, c_global, arg
     c_global_para = c_global.state_dict()
     for key in c_global_para:
         c_global_para[key] += total_delta[key]
-    # c_global.load_state_dict(c_global_para)
+    c_global.load_state_dict(c_global_para)
 
     avg_acc /= len(selected)
     if args.alg == 'local_training':
@@ -687,7 +687,7 @@ if __name__ == '__main__':
                 else:
                     for key in net_para:
                         global_para[key] += net_para[key] * fed_avg_freqs[idx]
-            # global_model.load_state_dict(global_para)
+            global_model.load_state_dict(global_para)
 
             logger.info('global n_training: %d' % len(train_dl_global))
             logger.info('global n_test: %d' % len(test_dl_global))
@@ -744,7 +744,7 @@ if __name__ == '__main__':
                 else:
                     for key in net_para:
                         global_para[key] += net_para[key] * fed_avg_freqs[idx]
-            # global_model.load_state_dict(global_para)
+            global_model.load_state_dict(global_para)
 
 
             logger.info('global n_training: %d' % len(train_dl_global))
@@ -808,7 +808,7 @@ if __name__ == '__main__':
                 else:
                     for key in net_para:
                         global_para[key] += net_para[key] * fed_avg_freqs[idx]
-            # global_model.load_state_dict(global_para)
+            global_model.load_state_dict(global_para)
 
 
             logger.info('global n_training: %d' % len(train_dl_global))
@@ -890,8 +890,7 @@ if __name__ == '__main__':
             updated_model = global_model.state_dict() 
             for key in updated_model:
                 updated_model[key] -= coeff * d_total_round[key]
-
-            # global_model.load_state_dict(updated_model)
+            global_model.load_state_dict(updated_model)
 
 
             logger.info('global n_training: %d' % len(train_dl_global))
