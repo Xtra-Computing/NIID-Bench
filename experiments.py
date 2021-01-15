@@ -378,7 +378,7 @@ def train_net_scaffold(net_id, net, global_model, c_local, c_global, train_datal
                 net_para = net.state_dict()
                 for key in net_para:
                     net_para[key] = net_para[key] - args.lr * (c_global_para[key] - c_local_para[key])
-                net.load_state_dict(net_para)
+                # net.load_state_dict(net_para)
 
                 cnt += 1
                 epoch_loss_collector.append(loss.item())
@@ -388,13 +388,13 @@ def train_net_scaffold(net_id, net, global_model, c_local, c_global, train_datal
         logger.info('Epoch: %d Loss: %f' % (epoch, epoch_loss))
 
     c_new_para = c_local.state_dict()
-    c_delta_para = c_local.state_dict()
+    c_delta_para = copy.deepcopy(c_local.state_dict())
     global_model_para = global_model.state_dict()
     net_para = net.state_dict()
     for key in net_para:
         c_new_para[key] = c_new_para[key] - c_global_para[key] + (global_model_para[key] - net_para[key]) / (cnt * args.lr)
         c_delta_para[key] = c_new_para[key] - c_local_para[key]
-    c_local.load_state_dict(c_new_para)
+    # c_local.load_state_dict(c_new_para)
 
 
     train_acc = compute_accuracy(net, train_dataloader, device=device)
@@ -458,7 +458,7 @@ def train_net_fednova(net_id, net, global_model, train_dataloader, test_dataload
     a_i = tau
     global_model_para = global_model.state_dict()
     net_para = net.state_dict()
-    norm_grad = global_model.state_dict()
+    norm_grad = copy.deepcopy(global_model.state_dict())
     for key in norm_grad:
         norm_grad[key] = (global_model_para[key] - net_para[key]) / a_i
 
@@ -476,7 +476,7 @@ def train_net_fednova(net_id, net, global_model, train_dataloader, test_dataload
 def local_train_net_scaffold(nets, selected, global_model, c_nets, c_global, args, net_dataidx_map, test_dl = None, device="cpu"):
     avg_acc = 0.0
 
-    total_delta = global_model.state_dict()
+    total_delta = copy.deepcopy(global_model.state_dict())
     for key in total_delta:
         total_delta[key] = 0
     for net_id, net in nets.items():
@@ -509,12 +509,12 @@ def local_train_net_scaffold(nets, selected, global_model, c_nets, c_global, arg
 
         logger.info("net %d final test acc %f" % (net_id, testacc))
         avg_acc += testacc
-
-    total_delta /= len(selected)
+    for key in total_delta:
+        total_delta[key] /= len(selected)
     c_global_para = c_global.state_dict()
     for key in c_global_para:
         c_global_para[key] += total_delta[key]
-    c_global.load_state_dict(c_global_para)
+    # c_global.load_state_dict(c_global_para)
 
     avg_acc /= len(selected)
     if args.alg == 'local_training':
@@ -687,8 +687,7 @@ if __name__ == '__main__':
                 else:
                     for key in net_para:
                         global_para[key] += net_para[key] * fed_avg_freqs[idx]
-            global_model.load_state_dict(global_para) 
-
+            # global_model.load_state_dict(global_para)
 
             logger.info('global n_training: %d' % len(train_dl_global))
             logger.info('global n_test: %d' % len(test_dl_global))
@@ -745,7 +744,7 @@ if __name__ == '__main__':
                 else:
                     for key in net_para:
                         global_para[key] += net_para[key] * fed_avg_freqs[idx]
-            global_model.load_state_dict(global_para)
+            # global_model.load_state_dict(global_para)
 
 
             logger.info('global n_training: %d' % len(train_dl_global))
@@ -809,7 +808,7 @@ if __name__ == '__main__':
                 else:
                     for key in net_para:
                         global_para[key] += net_para[key] * fed_avg_freqs[idx]
-            global_model.load_state_dict(global_para)
+            # global_model.load_state_dict(global_para)
 
 
             logger.info('global n_training: %d' % len(train_dl_global))
@@ -829,8 +828,8 @@ if __name__ == '__main__':
         global_models, global_model_meta_data, global_layer_type = init_nets(args.net_config, 0, 1, args)
         global_model = global_models[0]
 
-        d_list = [global_model.state_dict() for i in range(args.n_parties)]
-        d_total_round = global_model.state_dict()
+        d_list = [copy.deepcopy(global_model.state_dict()) for i in range(args.n_parties)]
+        d_total_round = copy.deepcopy(global_model.state_dict())
         d_list = []
         for i in range(args.n_parties):
             for key in d_list[i]:
@@ -869,12 +868,18 @@ if __name__ == '__main__':
             _, a_list, d_list, n_list = local_train_net_fednova(nets, selected, global_model, args, net_dataidx_map, test_dl = test_dl_global, device=device)
             total_n = sum(n_list)
             #print("total_n:", total_n)
-            d_total_round = global_model.state_dict()
+            d_total_round = copy.deepcopy(global_model.state_dict())
             for key in d_total_round:
                 d_total_round[key] = 0
 
             for i in range(len(selected)):
-                d_total_round = d_total_round + d_list[i] * n_list[i] / total_n
+                d_para = d_list[i].state_dict()
+                for key in d_para:
+                    d_total_round[key] += d_para[key] * n_list[i] / total_n
+
+
+            # for i in range(len(selected)):
+            #     d_total_round = d_total_round + d_list[i] * n_list[i] / total_n
 
             # local_train_net(nets, args, net_dataidx_map, local_split=False, device=device)
 
@@ -885,9 +890,9 @@ if __name__ == '__main__':
 
             updated_model = global_model.state_dict() 
             for key in updated_model:
-                updated_model[key] -= coeff * d_total_round
+                updated_model[key] -= coeff * d_total_round[key]
 
-            global_model.load_state_dict(updated_model)
+            # global_model.load_state_dict(updated_model)
 
 
             logger.info('global n_training: %d' % len(train_dl_global))
