@@ -461,7 +461,7 @@ def train_net_fednova(net_id, net, global_model, train_dataloader, test_dataload
     norm_grad = copy.deepcopy(global_model.state_dict())
     for key in norm_grad:
         #norm_grad[key] = (global_model_para[key] - net_para[key]) / a_i
-        norm_grad[key] = torch.dive(global_model_para[key]-net_para[key], a_i)
+        norm_grad[key] = torch.true_divide(global_model_para[key]-net_para[key], a_i)
     train_acc = compute_accuracy(net, train_dataloader, device=device)
     test_acc, conf_matrix = compute_accuracy(net, test_dataloader, get_confusion_matrix=True, device=device)
 
