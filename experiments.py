@@ -479,6 +479,7 @@ def local_train_net_scaffold(nets, selected, global_model, c_nets, c_global, arg
     total_delta = copy.deepcopy(global_model.state_dict())
     for key in total_delta:
         total_delta[key] = 0
+    c_global.to(device)
     for net_id, net in nets.items():
         if net_id not in selected:
             continue
@@ -487,6 +488,8 @@ def local_train_net_scaffold(nets, selected, global_model, c_nets, c_global, arg
         logger.info("Training network %s. n_training: %d" % (str(net_id), len(dataidxs)))
         # move the model to cuda device:
         net.to(device)
+
+        c_nets[net_id].to(device)
 
         noise_level = args.noise
         if net_id == args.n_parties - 1:
@@ -503,6 +506,7 @@ def local_train_net_scaffold(nets, selected, global_model, c_nets, c_global, arg
 
         trainacc, testacc, c_delta_para = train_net_scaffold(net_id, net, global_model, c_nets[net_id], c_global, train_dl_local, test_dl, n_epoch, args.lr, args.optimizer, device=device)
 
+        c_nets[net_id].to('cpu')
         for key in total_delta:
             total_delta[key] += c_delta_para[key]
 
