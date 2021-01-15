@@ -876,7 +876,7 @@ if __name__ == '__main__':
                 d_total_round[key] = 0
 
             for i in range(len(selected)):
-                d_para = d_list[i].state_dict()
+                d_para = d_list[i]
                 for key in d_para:
                     d_total_round[key] += d_para[key] * n_list[i] / total_n
 
