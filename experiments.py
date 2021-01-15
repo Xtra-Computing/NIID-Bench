@@ -460,8 +460,8 @@ def train_net_fednova(net_id, net, global_model, train_dataloader, test_dataload
     net_para = net.state_dict()
     norm_grad = copy.deepcopy(global_model.state_dict())
     for key in norm_grad:
-        norm_grad[key] = (global_model_para[key] - net_para[key]) / a_i
-
+        #norm_grad[key] = (global_model_para[key] - net_para[key]) / a_i
+        norm_grad[key] = torch.dive(global_model_para[key]-net_para[key], a_i)
     train_acc = compute_accuracy(net, train_dataloader, device=device)
     test_acc, conf_matrix = compute_accuracy(net, test_dataloader, get_confusion_matrix=True, device=device)
 
@@ -480,6 +480,7 @@ def local_train_net_scaffold(nets, selected, global_model, c_nets, c_global, arg
     for key in total_delta:
         total_delta[key] = 0
     c_global.to(device)
+    global_model.to(device)
     for net_id, net in nets.items():
         if net_id not in selected:
             continue
@@ -533,6 +534,7 @@ def local_train_net_fednova(nets, selected, global_model, args, net_dataidx_map,
     a_list = []
     d_list = []
     n_list = []
+    global_model.to(device)
     for net_id, net in nets.items():
         if net_id not in selected:
             continue
@@ -682,7 +684,7 @@ if __name__ == '__main__':
             # update global model
             total_data_points = sum([len(net_dataidx_map[r]) for r in selected])
             fed_avg_freqs = [len(net_dataidx_map[r]) / total_data_points for r in selected]
-            
+
             for idx in range(len(selected)):
                 net_para = nets[selected[idx]].cpu().state_dict()
                 if idx == 0:
@@ -739,7 +741,7 @@ if __name__ == '__main__':
             # update global model
             total_data_points = sum([len(net_dataidx_map[r]) for r in selected])
             fed_avg_freqs = [len(net_dataidx_map[r]) / total_data_points for r in selected]
-            
+
             for idx in range(len(selected)):
                 net_para = nets[selected[idx]].cpu().state_dict()
                 if idx == 0:
@@ -803,7 +805,7 @@ if __name__ == '__main__':
             # update global model
             total_data_points = sum([len(net_dataidx_map[r]) for r in selected])
             fed_avg_freqs = [len(net_dataidx_map[r]) / total_data_points for r in selected]
-            
+
             for idx in range(len(selected)):
                 net_para = nets[selected[idx]].cpu().state_dict()
                 if idx == 0:
@@ -891,7 +893,7 @@ if __name__ == '__main__':
             for i in range(len(selected)):
                 coeff = coeff + a_list[i] * n_list[i]/total_n
 
-            updated_model = global_model.state_dict() 
+            updated_model = global_model.state_dict()
             for key in updated_model:
                 updated_model[key] -= coeff * d_total_round[key]
             global_model.load_state_dict(updated_model)
