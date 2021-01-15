@@ -830,7 +830,6 @@ if __name__ == '__main__':
 
         d_list = [copy.deepcopy(global_model.state_dict()) for i in range(args.n_parties)]
         d_total_round = copy.deepcopy(global_model.state_dict())
-        d_list = []
         for i in range(args.n_parties):
             for key in d_list[i]:
                 d_list[i][key] = 0
