@@ -478,7 +478,7 @@ def local_train_net_scaffold(nets, selected, global_model, c_nets, c_global, arg
 
     total_delta = copy.deepcopy(global_model.state_dict())
     for key in total_delta:
-        total_delta[key] = 0
+        total_delta[key] = 0.0
     c_global.to(device)
     global_model.to(device)
     for net_id, net in nets.items():
@@ -518,7 +518,10 @@ def local_train_net_scaffold(nets, selected, global_model, c_nets, c_global, arg
         total_delta[key] /= len(selected)
     c_global_para = c_global.state_dict()
     for key in c_global_para:
-        c_global_para[key] += total_delta[key]
+        if c_global_para[key].type() == 'torch.LongTensor':
+            c_global_para[key] += total_delta[key].type(torch.LongTensor)
+        else:
+            c_global_para[key] += total_delta[key]
     c_global.load_state_dict(c_global_para)
 
     avg_acc /= len(selected)
@@ -875,11 +878,14 @@ if __name__ == '__main__':
             #print("total_n:", total_n)
             d_total_round = copy.deepcopy(global_model.state_dict())
             for key in d_total_round:
-                d_total_round[key] = 0
+                d_total_round[key] = 0.0
 
             for i in range(len(selected)):
                 d_para = d_list[i]
                 for key in d_para:
+                    #if d_total_round[key].type == 'torch.LongTensor':
+                    #    d_total_round[key] += (d_para[key] * n_list[i] / total_n).type(torch.LongTensor)
+                    #else:
                     d_total_round[key] += d_para[key] * n_list[i] / total_n
 
 
@@ -889,13 +895,17 @@ if __name__ == '__main__':
             # local_train_net(nets, args, net_dataidx_map, local_split=False, device=device)
 
             # update global model
-            coeff = 0
+            coeff = 0.0
             for i in range(len(selected)):
                 coeff = coeff + a_list[i] * n_list[i]/total_n
 
             updated_model = global_model.state_dict()
             for key in updated_model:
-                updated_model[key] -= coeff * d_total_round[key]
+                #print(updated_model[key])
+                if updated_model[key].type == 'torch.LongTensor':
+                    updated_model[key] -= (coeff * d_total_round[key]).type(torch.LongTensor)
+                else:
+                    updated_model[key] -= coeff * d_total_round[key]
             global_model.load_state_dict(updated_model)
 
 
