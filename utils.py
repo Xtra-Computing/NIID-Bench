@@ -207,9 +207,7 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
 
     n_train = y_train.shape[0]
 
-    if dataset == 'generated':
-        pass
-    elif partition == "homo":
+    if partition == "homo":
         idxs = np.random.permutation(n_train)
         batch_idxs = np.array_split(idxs, n_parties)
         net_dataidx_map = {i: batch_idxs[i] for i in range(n_parties)}
@@ -305,7 +303,7 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
         batch_idxs = np.split(idxs,proportions)
         net_dataidx_map = {i: batch_idxs[i] for i in range(n_parties)}
 
-    elif partition == "real":
+    elif partition == "real" and dataset == "femnist":
         num_user = u_train.shape[0]
         user = np.zeros(num_user+1,dtype=np.int32)
         for i in range(1,num_user+1):
