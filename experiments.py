@@ -520,7 +520,10 @@ def local_train_net_scaffold(nets, selected, global_model, c_nets, c_global, arg
     for key in c_global_para:
         if c_global_para[key].type() == 'torch.LongTensor':
             c_global_para[key] += total_delta[key].type(torch.LongTensor)
+        elif c_global_para[key].type() == 'torch.cuda.LongTensor':
+            c_global_para[key] += total_delta[key].type(torch.cuda.LongTensor)
         else:
+            #print(c_global_para[key].type())
             c_global_para[key] += total_delta[key]
     c_global.load_state_dict(c_global_para)
 
@@ -823,7 +826,7 @@ if __name__ == '__main__':
             logger.info('global n_training: %d' % len(train_dl_global))
             logger.info('global n_test: %d' % len(test_dl_global))
 
-
+            global_model.to('cpu')
             train_acc = compute_accuracy(global_model, train_dl_global)
             test_acc, conf_matrix = compute_accuracy(global_model, test_dl_global, get_confusion_matrix=True)
 
@@ -902,9 +905,13 @@ if __name__ == '__main__':
             updated_model = global_model.state_dict()
             for key in updated_model:
                 #print(updated_model[key])
-                if updated_model[key].type == 'torch.LongTensor':
+                if updated_model[key].type() == 'torch.LongTensor':
                     updated_model[key] -= (coeff * d_total_round[key]).type(torch.LongTensor)
+                elif updated_model[key].type() == 'torch.cuda.LongTensor':
+                    updated_model[key] -= (coeff * d_total_round[key]).type(torch.cuda.LongTensor)
                 else:
+                    #print(updated_model[key].type())
+                    #print((coeff*d_total_round[key].type()))
                     updated_model[key] -= coeff * d_total_round[key]
             global_model.load_state_dict(updated_model)
 
@@ -912,7 +919,7 @@ if __name__ == '__main__':
             logger.info('global n_training: %d' % len(train_dl_global))
             logger.info('global n_test: %d' % len(test_dl_global))
 
-
+            global_model.to('cpu')
             train_acc = compute_accuracy(global_model, train_dl_global)
             test_acc, conf_matrix = compute_accuracy(global_model, test_dl_global, get_confusion_matrix=True)
 
