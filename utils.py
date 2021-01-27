@@ -23,6 +23,8 @@ import random
 
 from models.mnist_model import Generator, Discriminator, DHead, QHead
 from config import params
+import sklearn.datasets as sk
+from sklearn.datasets import load_svmlight_file
 
 logging.basicConfig()
 logger = logging.getLogger()
@@ -198,6 +200,40 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
         idxs = np.linspace(0,3999,4000,dtype=np.int64)
         batch_idxs = np.array_split(idxs, n_parties)
         net_dataidx_map = {i: batch_idxs[i] for i in range(n_parties)}
+        mkdirs("data/generated/")
+        np.save("data/generated/X_train.npy",X_train)
+        np.save("data/generated/X_test.npy",X_test)
+        np.save("data/generated/y_train.npy",y_train)
+        np.save("data/generated/y_test.npy",y_test)
+    
+    elif dataset == 'covtype':
+        cov_type = sk.fetch_covtype('./data')
+        num_train = int(581012 * 0.7)
+        idxs = np.random.permutation(581012)
+        X_train = np.array(cov_type['data'][idxs[:num_train]], dtype=np.float32)
+        y_train = np.array(cov_type['target'][idxs[:num_train]], dtype=np.int32) - 1
+        X_test = np.array(cov_type['data'][idxs[num_train:]], dtype=np.float32)
+        y_test = np.array(cov_type['target'][idxs[num_train:]], dtype=np.int32) - 1
+        mkdirs("data/generated/")
+        np.save("data/generated/X_train.npy",X_train)
+        np.save("data/generated/X_test.npy",X_test)
+        np.save("data/generated/y_train.npy",y_train)
+        np.save("data/generated/y_test.npy",y_test)
+
+    elif dataset == 'a9a':
+        X_train, y_train = load_svmlight_file("data/a9a")
+        X_test, y_test = load_svmlight_file("data/a9a.t")
+        X_train = X_train.todense()
+        X_train = np.c_[X_train, np.zeros((len(y_train), 123 - np.size(X_train[0, :])))]
+        X_test = X_test.todense()
+        X_test = np.c_[X_test, np.zeros((len(y_test), 123 - np.size(X_test[0, :])))]
+        X_train = np.array(X_train, dtype=np.float32)
+        X_test = np.array(X_test, dtype=np.float32)
+        y_train = (y_train+1)/2
+        y_test = (y_test+1)/2
+        y_train = np.array(y_train, dtype=np.int32)
+        y_test = np.array(y_test, dtype=np.int32)
+
         mkdirs("data/generated/")
         np.save("data/generated/X_train.npy",X_train)
         np.save("data/generated/X_test.npy",X_test)
@@ -436,7 +472,7 @@ class AddGaussianNoise(object):
         return self.__class__.__name__ + '(mean={0}, std={1})'.format(self.mean, self.std)
 
 def get_dataloader(dataset, datadir, train_bs, test_bs, dataidxs=None, noise_level=0, net_id=None, total=0):
-    if dataset in ('mnist', 'femnist', 'fmnist', 'cifar10', 'svhn', 'generated'):
+    if dataset in ('mnist', 'femnist', 'fmnist', 'cifar10', 'svhn', 'generated', 'covtype', 'a9a'):
         if dataset == 'mnist':
             dl_obj = MNIST_truncated
 
@@ -495,7 +531,7 @@ def get_dataloader(dataset, datadir, train_bs, test_bs, dataidxs=None, noise_lev
                 transforms.ToTensor(),
                 AddGaussianNoise(0., noise_level, net_id, total)])
 
-        elif dataset == 'generated':
+        else:
             dl_obj = Generated
             transform_train = None
             transform_test = None
