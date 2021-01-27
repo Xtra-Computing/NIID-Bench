@@ -220,13 +220,13 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
         np.save("data/generated/y_train.npy",y_train)
         np.save("data/generated/y_test.npy",y_test)
 
-    elif dataset == 'a9a':
-        X_train, y_train = load_svmlight_file("data/a9a")
-        X_test, y_test = load_svmlight_file("data/a9a.t")
+    elif dataset in ('a9a'):
+        X_train, y_train = load_svmlight_file("data/{}".format(dataset))
+        X_test, y_test = load_svmlight_file("data/{}.t".format(dataset))
         X_train = X_train.todense()
-        X_train = np.c_[X_train, np.zeros((len(y_train), 123 - np.size(X_train[0, :])))]
         X_test = X_test.todense()
-        X_test = np.c_[X_test, np.zeros((len(y_test), 123 - np.size(X_test[0, :])))]
+        X_test = np.c_[X_test, np.zeros((len(y_test), X_train.shape[1] - np.size(X_test[0, :])))]
+
         X_train = np.array(X_train, dtype=np.float32)
         X_test = np.array(X_test, dtype=np.float32)
         y_train = (y_train+1)/2
