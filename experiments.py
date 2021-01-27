@@ -61,9 +61,14 @@ def init_nets(net_configs, dropout_p, n_parties, args):
         if args.dataset == "generated":
             net = PerceptronModel()
         elif args.model == "mlp":
-            input_size = net_configs[0]
-            output_size = net_configs[-1]
-            hidden_sizes = net_configs[1:-1]
+            if args.dataset == 'covtype':
+                input_size = 54
+                output_size = 7
+                hidden_sizes = [32,16,8]
+            elif args.dataset == 'a9a':
+                input_size = 123
+                output_size = 2
+                hidden_sizes = [32,16,8]
             net = FcNet(input_size, hidden_sizes, output_size, dropout_p)
         elif args.model == "vgg":
             net = vgg11()
