@@ -253,7 +253,7 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
         min_size = 0
         min_require_size = 10
         K = 10
-        if dataset == 'celeba':
+        if dataset in ('a9a'):
             K = 2
             # min_require_size = 100
 
@@ -290,7 +290,7 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
 
     elif partition > "noniid-#label0" and partition <= "noniid-#label9":
         num = eval(partition[13:])
-        if dataset == 'celeba':
+        if dataset in ('a9a'):
             num = 1
             K = 2
         else:
