@@ -206,14 +206,35 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
         np.save("data/generated/y_train.npy",y_train)
         np.save("data/generated/y_test.npy",y_test)
     
-    elif dataset == 'covtype':
-        cov_type = sk.fetch_covtype('./data')
-        num_train = int(581012 * 0.7)
-        idxs = np.random.permutation(581012)
-        X_train = np.array(cov_type['data'][idxs[:num_train]], dtype=np.float32)
-        y_train = np.array(cov_type['target'][idxs[:num_train]], dtype=np.int32) - 1
-        X_test = np.array(cov_type['data'][idxs[num_train:]], dtype=np.float32)
-        y_test = np.array(cov_type['target'][idxs[num_train:]], dtype=np.int32) - 1
+    #elif dataset == 'covtype':
+    #    cov_type = sk.fetch_covtype('./data')
+    #    num_train = int(581012 * 0.75)
+    #    idxs = np.random.permutation(581012)
+    #    X_train = np.array(cov_type['data'][idxs[:num_train]], dtype=np.float32)
+    #    y_train = np.array(cov_type['target'][idxs[:num_train]], dtype=np.int32) - 1
+    #    X_test = np.array(cov_type['data'][idxs[num_train:]], dtype=np.float32)
+    #    y_test = np.array(cov_type['target'][idxs[num_train:]], dtype=np.int32) - 1
+    #    mkdirs("data/generated/")
+    #    np.save("data/generated/X_train.npy",X_train)
+    #    np.save("data/generated/X_test.npy",X_test)
+    #    np.save("data/generated/y_train.npy",y_train)
+    #    np.save("data/generated/y_test.npy",y_test)
+
+    elif dataset in ('rcv1', 'SUSY', 'covtype'):
+        X_train, y_train = load_svmlight_file("../../../data/{}".format(dataset))
+        X_train = X_train.todense()
+        num_train = int(X_train.shape[0] * 0.75)
+        if dataset == 'covtype':
+            y_train = y_train-1
+        else:
+            y_train = (y_train+1)/2
+        idxs = np.random.permutation(X_train.shape[0])
+
+        X_test = np.array(X_train[idxs[num_train:]], dtype=np.float32)
+        y_test = np.array(y_train[idxs[num_train:]], dtype=np.int32)
+        X_train = np.array(X_train[idxs[:num_train]], dtype=np.float32)
+        y_train = np.array(y_train[idxs[:num_train]], dtype=np.int32)
+
         mkdirs("data/generated/")
         np.save("data/generated/X_train.npy",X_train)
         np.save("data/generated/X_test.npy",X_test)
@@ -221,8 +242,8 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
         np.save("data/generated/y_test.npy",y_test)
 
     elif dataset in ('a9a'):
-        X_train, y_train = load_svmlight_file("data/{}".format(dataset))
-        X_test, y_test = load_svmlight_file("data/{}.t".format(dataset))
+        X_train, y_train = load_svmlight_file("../../../data/{}".format(dataset))
+        X_test, y_test = load_svmlight_file("../../../data/{}.t".format(dataset))
         X_train = X_train.todense()
         X_test = X_test.todense()
         X_test = np.c_[X_test, np.zeros((len(y_test), X_train.shape[1] - np.size(X_test[0, :])))]
@@ -253,7 +274,7 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
         min_size = 0
         min_require_size = 10
         K = 10
-        if dataset in ('a9a'):
+        if dataset in ('celeba', 'covtype', 'a9a', 'rcv1', 'SUSY'):
             K = 2
             # min_require_size = 100
 
@@ -290,7 +311,7 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
 
     elif partition > "noniid-#label0" and partition <= "noniid-#label9":
         num = eval(partition[13:])
-        if dataset in ('a9a'):
+        if dataset in ('celeba', 'covtype', 'a9a', 'rcv1', 'SUSY'):
             num = 1
             K = 2
         else:
@@ -472,7 +493,7 @@ class AddGaussianNoise(object):
         return self.__class__.__name__ + '(mean={0}, std={1})'.format(self.mean, self.std)
 
 def get_dataloader(dataset, datadir, train_bs, test_bs, dataidxs=None, noise_level=0, net_id=None, total=0):
-    if dataset in ('mnist', 'femnist', 'fmnist', 'cifar10', 'svhn', 'generated', 'covtype', 'a9a'):
+    if dataset in ('mnist', 'femnist', 'fmnist', 'cifar10', 'svhn', 'generated', 'covtype', 'a9a', 'rcv1', 'SUSY'):
         if dataset == 'mnist':
             dl_obj = MNIST_truncated
 
