@@ -63,12 +63,20 @@ def init_nets(net_configs, dropout_p, n_parties, args):
         elif args.model == "mlp":
             if args.dataset == 'covtype':
                 input_size = 54
-                output_size = 7
+                output_size = 2
                 hidden_sizes = [32,16,8]
             elif args.dataset == 'a9a':
                 input_size = 123
                 output_size = 2
                 hidden_sizes = [32,16,8]
+            elif args.dataset == 'rcv1':
+                input_size = 47236
+                output_size = 2
+                hidden_sizes = [32,16,8]
+            elif args.dataset == 'SUSY':
+                input_size = 18
+                output_size = 2
+                hidden_sizes = [16,8]
             net = FcNet(input_size, hidden_sizes, output_size, dropout_p)
         elif args.model == "vgg":
             net = vgg11()
