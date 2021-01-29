@@ -954,37 +954,4 @@ if __name__ == '__main__':
 
         logger.info("All in test acc: %f" % testacc)
 
-    elif args.alg == 'gan':
-
-        train_list = []
-
-        for net_id in range(args.n_parties):
-            dataidxs = net_dataidx_map[net_id]
-
-            logger.info("Training network %s. n_training: %d" % (str(net_id), len(dataidxs)))
-
-            noise_level = args.noise
-            if net_id == args.n_parties - 1:
-                noise_level = 0
-
-            if args.noise_type == 'space':
-                train_dl_local, test_dl_local, _, _ = get_dataloader(args.dataset, args.datadir, args.batch_size, 32, dataidxs, noise_level, net_id, args.n_parties-1)
-            else:
-                noise_level = args.noise / (args.n_parties - 1) * net_id
-                train_dl_local, test_dl_local, _, _ = get_dataloader(args.dataset, args.datadir, args.batch_size, 32, dataidxs, noise_level)
-
-            genData_client = InfoGAN(train_dl_local, traindata_cls_counts[net_id], args)
-
-            if genData_client == 0:
-                pass
-            else:
-                train_list.append(genData_client)
-
-        train_generated = data.ConcatDataset(train_list)
-        genData_all = data.DataLoader(dataset=train_generated, batch_size=args.batch_size, shuffle=True, drop_last=True)
-
-        nets, local_model_meta_data, layer_type = init_nets(args.net_config, args.dropout_p, 1, args)
-        n_epoch = args.epochs
-
-        trainacc, testacc = train_net(0, nets[0], genData_all, test_dl_global, n_epoch, args.lr, args.optimizer, device=device)
-        logger.info("Generated data, Final test acc %f" % (testacc))
+   
