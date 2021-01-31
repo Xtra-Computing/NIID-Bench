@@ -74,21 +74,20 @@ You can access `net_dataidx_map` in `experiments.py`, line 632. `net_dataidx_map
 
 
 ## Leader Board
-| Dataset                      | Number of Parties | Sample Rate | Batch Size | Partition                                 | Model | Communication Round                              | Winning Algorithm | Accuracy |
-| ----------------------------- | -------------- | ------------ | -------------- | ---------------------------------------- | ------------- | ----------------- | --------- | --------- |
-| `cifar10` | 10 |1| 64 | `noniid-labeldir` with `beta=0.5` | `simple-cnn` |50| SCAFFOLD | 69.8% |
-| `cifar10` | 10 |1| 64 | `noniid-labeldir` with `beta=0.1` | `vgg` |100| SCAFFOLD | 85.5% |
-| `cifar10` | 10 |1| 64 | `noniid-labeldir` with `beta=0.1` | `resnet` |100| SCAFFOLD | 83.6% |
-| `cifar10` | 10 |1| 64 | `noniid-#label1` | `simple-cnn` |50| FedProx (`mu=0.01`) | 12.3% |
-| `cifar10` | 10 |1| 64 | `noniid-#label2` | `simple-cnn` |50| FedProx (`mu=0.01`) | 50.7% |
-| `cifar10` | 100 |0.1| 64 | `noniid-#label2` | `simple-cnn` |500| FedNova | 48.0% |
-| `cifar10` | 10 |1| 64 | `noniid-#label3` | `simple-cnn` |50| FedAvg | 58.3% |
-| `cifar10` | 100 |0.1| 64 | `noniid-#label3` | `simple-cnn` |500| FedProx (`mu=0.001`) | 59.7% |
-| `cifar10` | 10 |1| 64 | `homo` with `noise=0.1` | `simple-cnn` |50| SCAFFOLD | 70.1% |
-| `cifar10` | 10 |1| 64 | `homo` with `noise=0.1` | `vgg` |100| SCAFFOLD | 86.9% |
-| `cifar10` | 10 |1| 64 | `homo` with `noise=0.1` | `resnet` |100| SCAFFOLD | 90.2% |
-| `cifar10` | 10 |1| 64 | `iid-diff-quantity` with `beta=0.5` | `simple-cnn` |50| FedAvg | 72.0% |
-| `cifar10` | 10 |1| 64 | `iid-diff-quantity` with `beta=0.1` | `vgg` |100| SCAFFOLD | 90.5% |
-| `cifar10` | 10 |1| 64 | `iid-diff-quantity` with `beta=0.1` | `resnet` |100| FedAvg | 93.2% |
-| `cifar10` | 10 |1| 64 | `homo` | `simple-cnn` |50| SCAFFOLD | 71.5% |
-| `cifar10` | 100 |0.1| 64 | `homo` | `simple-cnn` |500| FedNova | 66.1% |
+
+### Cifar-10, 10 parties, 500 communication rounds, sample rate = 1, batch size = 64
+ Partition                                 | Model                             | Winning Algorithm | Accuracy |
+| ----------------------------- | -------------- | ------------ | -------------- | 
+| `noniid-labeldir` with `beta=0.5` | `simple-cnn` | SCAFFOLD | 69.8% |
+| `noniid-labeldir` with `beta=0.1` | `vgg` |100| SCAFFOLD | 85.5% |
+| `noniid-labeldir` with `beta=0.1` | `resnet` |100| SCAFFOLD | 83.6% |
+| `noniid-#label1` | `simple-cnn` | FedProx (`mu=0.01`) | 12.3% |
+| `noniid-#label2` | `simple-cnn` | FedProx (`mu=0.01`) | 50.7% |
+| `noniid-#label3` | `simple-cnn` | FedAvg | 58.3% |
+| `homo` with `noise=0.1` | `simple-cnn` | SCAFFOLD | 70.1% |
+| `homo` with `noise=0.1` | `vgg` | SCAFFOLD | 86.9% |
+| `homo` with `noise=0.1` | `resnet` | SCAFFOLD | 90.2% |
+| `iid-diff-quantity` with `beta=0.5` | `simple-cnn` |50| FedAvg | 72.0% |
+| `iid-diff-quantity` with `beta=0.1` | `vgg` | SCAFFOLD | 90.5% |
+| `iid-diff-quantity` with `beta=0.1` | `resnet` | FedAvg | 93.2% |
+| `simple-cnn` | SCAFFOLD | 71.5% |
