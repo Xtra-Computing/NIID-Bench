@@ -76,3 +76,7 @@ You can access `net_dataidx_map` in `experiments.py`, line 632. `net_dataidx_map
 ## Leader Board
 | Dataset                      | Partition                                 | Model                                 | Winning Algorithm | Accuracy |
 | ----------------------------- | ---------------------------------------- | ---------------------------------------- | ------------- | ----------------- |
+| `cifar-10` | `noniid-labeldir` with `beta=0.5` | `simple-cnn` | SCAFFOLD | 69.8% |
+| `cifar-10` | `noniid-#label1` | `simple-cnn` | FedProx (`mu=0.01`) | 12.3% |
+| `cifar-10` | `noniid-#label2` | `simple-cnn` | FedProx (`mu=0.01`) | 50.7% |
+| `cifar-10` | `noniid-#label3` | `simple-cnn` | FedAvg | 58.3% |
