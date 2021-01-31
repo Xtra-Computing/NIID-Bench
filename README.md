@@ -76,7 +76,7 @@ You can access `net_dataidx_map` in `experiments.py`, line 632. `net_dataidx_map
 ## Leader Board
 
 ### Quantity-based label imbalance
-Cifar-10, 10 parties, sample rate = 1, batch size = 64, learning rate = 0.01
+* Cifar-10, 10 parties, sample rate = 1, batch size = 64, learning rate = 0.01
 | Partition                                 | Model     | Round                       | Algorithm | Accuracy |
 | --------------|--------------- | -------------- | ------------ | -------------- | 
 | `noniid-#label2` | `simple-cnn` |50| FedProx (`mu=0.01`) | 50.7% |
@@ -84,7 +84,7 @@ Cifar-10, 10 parties, sample rate = 1, batch size = 64, learning rate = 0.01
 | `noniid-#label2` | `simple-cnn` |50| SCAFFOLD | 49.1% |
 | `noniid-#label2` | `simple-cnn` |50| FedNova | 48.9% |
 
-Cifar-10, 100 parties, sample rate = 0.1, batch size = 64, learning rate = 0.01
+* Cifar-10, 100 parties, sample rate = 0.1, batch size = 64, learning rate = 0.01
 | Partition                                 | Model     | Round                       | Algorithm | Accuracy |
 | --------------|--------------- | -------------- | ------------ | -------------- | 
 | `noniid-#label2` | `simple-cnn` |500| FedNova | 48.0% |
@@ -93,19 +93,22 @@ Cifar-10, 100 parties, sample rate = 0.1, batch size = 64, learning rate = 0.01
 | `noniid-#label2` | `simple-cnn` |500| SCAFFOLD | 10.0% |
 
 ### Distribution-based label imbalance
-Cifar-10, 10 parties, sample rate = 1, batch size = 64, learning rate = 0.01
+* Cifar-10, 10 parties, sample rate = 1, batch size = 64, learning rate = 0.01
 | Partition                                 | Model     | Round                       | Algorithm | Accuracy |
 | --------------|--------------- | -------------- | ------------ | -------------- | 
 | `noniid-labeldir` with `beta=0.5` | `simple-cnn` |50| SCAFFOLD | 69.8% |
 | `noniid-labeldir` with `beta=0.5` | `simple-cnn` |50| FedAvg | 68.2% |
 | `noniid-labeldir` with `beta=0.5` | `simple-cnn` |50| FedNova | 68.0% |
 | `noniid-labeldir` with `beta=0.5` | `simple-cnn` |50| FedProx (`mu=0.01`) | 67.9% |
+
+| Partition                                 | Model     | Round                       | Algorithm | Accuracy |
+| --------------|--------------- | -------------- | ------------ | -------------- | 
 | `noniid-labeldir` with `beta=0.1` | `vgg` |100| SCAFFOLD | 85.5% |
 | `noniid-labeldir` with `beta=0.1` | `vgg` |100| FedNova | 84.4% |
 | `noniid-labeldir` with `beta=0.1` | `vgg` |100| FedProx (`mu=0.01`) | 84.4% |
 | `noniid-labeldir` with `beta=0.1` | `vgg` |100| FedAvg | 84.0% |
 
-Cifar-10, 100 parties, sample rate = 0.1, batch size = 64, learning rate = 0.01
+* Cifar-10, 100 parties, sample rate = 0.1, batch size = 64, learning rate = 0.01
 | Partition                                 | Model     | Round                       | Algorithm | Accuracy |
 | --------------|--------------- | -------------- | ------------ | -------------- | 
 | `noniid-labeldir` with `beta=0.5` | `simple-cnn` |500| FedNova | 60.0% |
@@ -114,32 +117,36 @@ Cifar-10, 100 parties, sample rate = 0.1, batch size = 64, learning rate = 0.01
 | `noniid-labeldir` with `beta=0.5` | `simple-cnn` |500| SCAFFOLD | 10.0% |
 
 ### Noise-based feature imbalance
-
-
-
-
+* Cifar-10, 10 parties, sample rate = 1, batch size = 64, learning rate = 0.01
+| Partition                                 | Model     | Round                       | Algorithm | Accuracy |
+| --------------|--------------- | -------------- | ------------ | -------------- | 
+| `homo` with `noise=0.1` | `simple-cnn` |50| SCAFFOLD | 70.1% |
+| `homo` with `noise=0.1` | `simple-cnn` |50| FedNova | 70.0% |
+| `homo` with `noise=0.1` | `simple-cnn` |50| FedProx (`mu=0.01`) | 69.3% |
+| `homo` with `noise=0.1` | `simple-cnn` |50| FedAvg | 68.9% |
 
 | Partition                                 | Model     | Round                       | Algorithm | Accuracy |
 | --------------|--------------- | -------------- | ------------ | -------------- | 
-| `noniid-labeldir` with `beta=0.5` | `simple-cnn` |50| SCAFFOLD | 69.8% |
-| `noniid-labeldir` with `beta=0.1` | `vgg` |100| SCAFFOLD | 85.5% |
-| `noniid-labeldir` with `beta=0.1` | `resnet` |100| SCAFFOLD | 83.6% |
-| `noniid-#label1` | `simple-cnn` |50| FedProx (`mu=0.01`) | 12.3% |
-| `noniid-#label2` | `simple-cnn` |50| FedProx (`mu=0.01`) | 50.7% |
-| `noniid-#label3` | `simple-cnn` |50| FedAvg | 58.3% |
-| `homo` with `noise=0.1` | `simple-cnn` |50| SCAFFOLD | 70.1% |
-| `homo` with `noise=0.1` | `vgg` |100| SCAFFOLD | 86.9% |
 | `homo` with `noise=0.1` | `resnet` |100| SCAFFOLD | 90.2% |
-| `iid-diff-quantity` with `beta=0.5` | `simple-cnn` |50| FedAvg | 72.0% |
-| `iid-diff-quantity` with `beta=0.1` | `vgg` |100| SCAFFOLD | 90.5% |
-| `iid-diff-quantity` with `beta=0.1` | `resnet` |100| FedAvg | 93.2% |
-|`homo`| `simple-cnn` |50| SCAFFOLD | 71.5% |
+| `homo` with `noise=0.1` | `resnet` |100| FedNova | 89.4% |
+| `homo` with `noise=0.1` | `resnet` |100| FedProx (`mu=0.01`) | 89.2% |
+| `homo` with `noise=0.1` | `resnet` |100| FedAvg | 89.1% |
 
-### Cifar-10, 100 parties, sample rate = 0.1, batch size = 64, learning rate = 0.01
-| Partition                                 | Model     | Round                       | Winning Algorithm | Accuracy |
+### Quantity Skew
+* Cifar-10, 10 parties, sample rate = 1, batch size = 64, learning rate = 0.01
+| Partition                                 | Model     | Round                       | Algorithm | Accuracy |
 | --------------|--------------- | -------------- | ------------ | -------------- | 
-| `noniid-labeldir` with `beta=0.5` | `simple-cnn` |500| FedNova | 60.0% |
-| `noniid-#label2` | `simple-cnn` |500| FedNova | 48.0% |
-| `noniid-#label3` | `simple-cnn` |500| FedProx (`mu=0.001`) | 59.7% |
-| `iid-diff-quantity` with `beta=0.5` | `simple-cnn` |500| FedProx (`mu=0.01`) | 70.4% |
+| `iid-diff-quantity` with `beta=0.5` | `simple-cnn` |50| FedAvg | 72.0% |
+| `iid-diff-quantity` with `beta=0.5` | `simple-cnn` |50| FedProx (`mu=0.01`) | 71.2% |
+| `iid-diff-quantity` with `beta=0.5` | `simple-cnn` |50| SCAFFOLD | 62.4% |
+| `iid-diff-quantity` with `beta=0.5` | `simple-cnn` |50| FedNova | 24.4% |
+
+### IID Setting
+* Cifar-10, 100 parties, sample rate = 0.1, batch size = 64, learning rate = 0.01
+| Partition                                 | Model     | Round                       | Algorithm | Accuracy |
+| --------------|--------------- | -------------- | ------------ | -------------- | 
 |`homo`| `simple-cnn` |500| FedNova | 66.1% |
+|`homo`| `simple-cnn` |500| FedProx (`mu=0.01`) | 66.0% |
+|`homo`| `simple-cnn` |500| FedAvg | 65.6% |
+|`homo`| `simple-cnn` |500| SCAFFOLD | 10.0% |
+
