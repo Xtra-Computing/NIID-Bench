@@ -1,4 +1,4 @@
-# Fed-Learning-non-iid-benchmark
+# NIID-Bench
 
 This code runs a benchmark for federated learning algorithms under non-IID data distribution scenarios. Specifically, we implement 4 federated learning algorithms (FedAvg, FedProx, SCAFFOLD & FedNova), 3 types of non-IID settings (label distribution skew, feature distribution skew & quantity skew) and 9 datasets (MNIST, Cifar-10, Fashion-MNIST, SVHN, Generated 3D dataset, FEMNIST, adult, rcv1, covtype).
 
@@ -69,3 +69,5 @@ You can access `net_dataidx_map` in `experiments.py`, line 632. `net_dataidx_map
 * `partition`=`iid-diff-quantity`, `mu`=`0.5` or `0.1`
 ### IID Setting
 * `partition`=`homo`
+
+## Leader Board
