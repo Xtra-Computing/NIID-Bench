@@ -75,8 +75,35 @@ You can access `net_dataidx_map` in `experiments.py`, line 632. `net_dataidx_map
 
 ## Leader Board
 
-### Cifar-10, 10 parties, sample rate = 1, batch size = 64, learning rate = 0.01
-| Partition                                 | Model     | Round                       | Winning Algorithm | Accuracy |
+### Quantity-based label imbalance
+Cifar-10, 10 parties, sample rate = 1, batch size = 64, learning rate = 0.01
+| Partition                                 | Model     | Round                       | Algorithm | Accuracy |
+| --------------|--------------- | -------------- | ------------ | -------------- | 
+| `noniid-#label2` | `simple-cnn` |50| FedProx (`mu=0.01`) | 50.7% |
+| `noniid-#label2` | `simple-cnn` |50| FedAvg | 49.8% |
+| `noniid-#label2` | `simple-cnn` |50| SCAFFOLD | 49.1% |
+| `noniid-#label2` | `simple-cnn` |50| FedNova | 48.9% |
+
+Cifar-10, 100 parties, sample rate = 0.1, batch size = 64, learning rate = 0.01
+| Partition                                 | Model     | Round                       | Algorithm | Accuracy |
+| --------------|--------------- | -------------- | ------------ | -------------- | 
+| `noniid-#label2` | `simple-cnn` |500| FedNova | 48.0% |
+| `noniid-#label2` | `simple-cnn` |500| FedAvg | 45.3% |
+| `noniid-#label2` | `simple-cnn` |500| FedProx (`mu=0.001`) | 39.3% |
+| `noniid-#label2` | `simple-cnn` |500| SCAFFOLD | 10.0% |
+
+### Distribution-based label imbalance
+Cifar-10, 10 parties, sample rate = 1, batch size = 64, learning rate = 0.01
+| Partition                                 | Model     | Round                       | Algorithm | Accuracy |
+| --------------|--------------- | -------------- | ------------ | -------------- | 
+| `noniid-labeldir` with `beta=0.5` | `simple-cnn` |50| SCAFFOLD | 69.8% |
+| `noniid-labeldir` with `beta=0.5` | `simple-cnn` |50| FedAvg | 68.2% |
+| `noniid-labeldir` with `beta=0.5` | `simple-cnn` |50| FedNova | 68.0% |
+| `noniid-labeldir` with `beta=0.5` | `simple-cnn` |50| FedProx (`mu=0.01`) | 67.9% |
+
+
+
+| Partition                                 | Model     | Round                       | Algorithm | Accuracy |
 | --------------|--------------- | -------------- | ------------ | -------------- | 
 | `noniid-labeldir` with `beta=0.5` | `simple-cnn` |50| SCAFFOLD | 69.8% |
 | `noniid-labeldir` with `beta=0.1` | `vgg` |100| SCAFFOLD | 85.5% |
