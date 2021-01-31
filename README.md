@@ -77,7 +77,7 @@ You can access `net_dataidx_map` in `experiments.py`, line 632. `net_dataidx_map
 
 ### Cifar-10, 10 parties, sample rate = 1, batch size = 64
  Partition                                 | Model     | Round                       | Winning Algorithm | Accuracy |
-| ----------------------------- | -------------- | ------------ | -------------- | 
+| --------------|--------------- | -------------- | ------------ | -------------- | 
 | `noniid-labeldir` with `beta=0.5` | `simple-cnn` |50| SCAFFOLD | 69.8% |
 | `noniid-labeldir` with `beta=0.1` | `vgg` |100| SCAFFOLD | 85.5% |
 | `noniid-labeldir` with `beta=0.1` | `resnet` |100| SCAFFOLD | 83.6% |
