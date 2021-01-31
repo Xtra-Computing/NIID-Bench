@@ -56,3 +56,14 @@ python experiments.py --model=simple-cnn \
 | `noise` | Maximum variance of Gaussian noise we add to local party. |
 | `sample` | Ratio of parties that participate in each communication round. |
 | `init_seed` | The initial seed. |
+
+## Data Partition Map
+You can access `net_dataidx_map` in `experiments.py`, line 632. `net_dataidx_map` is a dictionary. Its keys are party ID, and the value of each key is a list containing index of data assigned to this party. For our experiments, we set `init_seed` as 0, 1, 2 respectively. We list the way to get our data partition as follow.
+### Label Distribution Skew
+* **Quantity-based label imbalance**: `partition`=`noniid-#label1`, `noniid-#label2` or `noniid-#label3`
+* **Distribution-based label imbalance**: `partition`=`noniid-labeldir`, `mu`=`0.5` or `0.1`
+### Feature Distribution Skew
+* **Noise-based feature imbalance**: `partition=homo`, `noise=0.1`
+* **Synthetic feature imbalance & Real-world feature imbalance**: `partition=real`
+### Quantity Skew
+`partition`=`iid-diff-quantity`, `mu`=`0.5` or `0.1`
