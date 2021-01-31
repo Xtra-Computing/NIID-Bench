@@ -31,10 +31,28 @@ python experiments.py --model=simple-cnn \
     --device='cuda:0'\
     --datadir='./data/' \
     --logdir='./logs/' \
-    --noise=0
+    --noise=0 \
+    --sample=1 \
+    --init_seed=0
 ```
 
 | Parameter                      | Description                                 |
 | ----------------------------- | ---------------------------------------- |
 | `model` | The model architecture. Options: `simple-cnn`, `vgg`, `resnet`, `mlp`. |
 | `dataset`      | Dataset to use. Options: `mnist`, `cifar10`, `fmnist`, `svhn`, `generated`, `femnist`, `a9a`, `rcv1`, `covtype`. |
+| `alg` | The training algorithm. Options: `fedavg`, `fedprox`, `scaffold`, `fednova`. |
+| `lr` | Learning rate for the local models. |
+| `batch-size` | Batch size. |
+| `epochs` | Number of local training epochs. |
+| `n_parties` | Number of parties. |
+| `mu` | The proximal term parameter for FedProx. |
+| `rho` | The parameter controlling the momentum SGD. |
+| `comm_round`    | Number of communication rounds to use. |
+| `partition`    | Tha partition way. Options: `homo`, `noniid-labeldir`, `noniid-#label1` (or 2, 3, ...), `real`, `iid-diff-quantity` |
+| `beta` | The concentration parameter of the Dirichlet distribution for heterogeneous partition. |
+| `device` | Specify the device to run the program. |
+| `datadir` | The path of the dataset. |
+| `logdir` | The path to store the logs. |
+| `noise` | Maximum variance of Gaussian noise we add to local party. |
+| `sample` | Ratio of parties that participate in each communication round. |
+| `init_seed` | The initial seed. |
