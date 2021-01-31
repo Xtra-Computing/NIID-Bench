@@ -34,5 +34,7 @@ python experiments.py --model=simple-cnn \
     --noise=0
 ```
 
-| Parameter | Explanation |
-| model | The model to experiment with. For most cases of image dataset, we use simple-cnn. We also try vgg & resnet. For tabular dataset, please select mlp. |
+| Parameter                      | Description                                 |
+| ----------------------------- | ---------------------------------------- |
+| `model` | The model architecture. Options: `simple-cnn`, `vgg`, `resnet`, `mlp`. |
+| `dataset`      | Dataset to use. Options: `mnist`, `cifar10`, `fmnist`, `svhn`, `generated`, `femnist`, `a9a`, `rcv1`, `covtype`. |
