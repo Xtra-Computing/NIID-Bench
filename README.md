@@ -63,7 +63,7 @@ You can access `net_dataidx_map` in `experiments.py`, line 632. `net_dataidx_map
 * **Quantity-based label imbalance**: `partition`=`noniid-#label1`, `noniid-#label2` or `noniid-#label3`
 * **Distribution-based label imbalance**: `partition`=`noniid-labeldir`, `mu`=`0.5` or `0.1`
 ### Feature Distribution Skew
-* **Noise-based feature imbalance**: `partition=homo`, `noise=0.1`
-* **Synthetic feature imbalance & Real-world feature imbalance**: `partition=real`
+* **Noise-based feature imbalance**: `partition`=`homo`, `noise`=`0.1`
+* **Synthetic feature imbalance & Real-world feature imbalance**: `partition`=`real`
 ### Quantity Skew
 * `partition`=`iid-diff-quantity`, `mu`=`0.5` or `0.1`
