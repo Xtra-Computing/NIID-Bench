@@ -92,7 +92,7 @@ You can access `net_dataidx_map` in `experiments.py`, line 632. `net_dataidx_map
 | `iid-diff-quantity` with `beta=0.1` | `resnet` |100| FedAvg | 93.2% |
 |`homo`| `simple-cnn` |50| SCAFFOLD | 71.5% |
 
-### Cifar-10, 100 parties, 500 rounds, sample rate = 0.1, batch size = 64, learning rate = 0.01
+### Cifar-10, 100 parties, sample rate = 0.1, batch size = 64, learning rate = 0.01
 | Partition                                 | Model     | Round                       | Winning Algorithm | Accuracy |
 | --------------|--------------- | -------------- | ------------ | -------------- | 
 | `noniid-labeldir` with `beta=0.5` | `simple-cnn` |500| FedNova | 60.0% |
