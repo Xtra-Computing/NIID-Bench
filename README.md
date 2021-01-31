@@ -74,3 +74,5 @@ You can access `net_dataidx_map` in `experiments.py`, line 632. `net_dataidx_map
 
 
 ## Leader Board
+| Dataset                      | Partition                                 | Model                                 | Winning Algorithm | Accuracy |
+| ----------------------------- | ---------------------------------------- | ---------------------------------------- | ------------- | ----------------- |
