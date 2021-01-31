@@ -76,7 +76,7 @@ You can access `net_dataidx_map` in `experiments.py`, line 632. `net_dataidx_map
 ## Leader Board
 
 ### Cifar-10, 10 parties, sample rate = 1, batch size = 64
- Partition                                 | Model     | Round                       | Winning Algorithm | Accuracy |
+ Partition                                 | Model     | Communication Round                       | Winning Algorithm | Accuracy |
 | --------------|--------------- | -------------- | ------------ | -------------- | 
 | `noniid-labeldir` with `beta=0.5` | `simple-cnn` |50| SCAFFOLD | 69.8% |
 | `noniid-labeldir` with `beta=0.1` | `vgg` |100| SCAFFOLD | 85.5% |
