@@ -75,19 +75,19 @@ You can access `net_dataidx_map` in `experiments.py`, line 632. `net_dataidx_map
 
 ## Leader Board
 
-### Cifar-10, 10 parties, 500 communication rounds, sample rate = 1, batch size = 64
- Partition                                 | Model                             | Winning Algorithm | Accuracy |
+### Cifar-10, 10 parties, sample rate = 1, batch size = 64
+ Partition                                 | Model     | Round                       | Winning Algorithm | Accuracy |
 | ----------------------------- | -------------- | ------------ | -------------- | 
-| `noniid-labeldir` with `beta=0.5` | `simple-cnn` | SCAFFOLD | 69.8% |
+| `noniid-labeldir` with `beta=0.5` | `simple-cnn` |50| SCAFFOLD | 69.8% |
 | `noniid-labeldir` with `beta=0.1` | `vgg` |100| SCAFFOLD | 85.5% |
 | `noniid-labeldir` with `beta=0.1` | `resnet` |100| SCAFFOLD | 83.6% |
-| `noniid-#label1` | `simple-cnn` | FedProx (`mu=0.01`) | 12.3% |
-| `noniid-#label2` | `simple-cnn` | FedProx (`mu=0.01`) | 50.7% |
-| `noniid-#label3` | `simple-cnn` | FedAvg | 58.3% |
-| `homo` with `noise=0.1` | `simple-cnn` | SCAFFOLD | 70.1% |
-| `homo` with `noise=0.1` | `vgg` | SCAFFOLD | 86.9% |
-| `homo` with `noise=0.1` | `resnet` | SCAFFOLD | 90.2% |
+| `noniid-#label1` | `simple-cnn` |50| FedProx (`mu=0.01`) | 12.3% |
+| `noniid-#label2` | `simple-cnn` |50| FedProx (`mu=0.01`) | 50.7% |
+| `noniid-#label3` | `simple-cnn` |50| FedAvg | 58.3% |
+| `homo` with `noise=0.1` | `simple-cnn` |50| SCAFFOLD | 70.1% |
+| `homo` with `noise=0.1` | `vgg` |100| SCAFFOLD | 86.9% |
+| `homo` with `noise=0.1` | `resnet` |100| SCAFFOLD | 90.2% |
 | `iid-diff-quantity` with `beta=0.5` | `simple-cnn` |50| FedAvg | 72.0% |
-| `iid-diff-quantity` with `beta=0.1` | `vgg` | SCAFFOLD | 90.5% |
-| `iid-diff-quantity` with `beta=0.1` | `resnet` | FedAvg | 93.2% |
-| `simple-cnn` | SCAFFOLD | 71.5% |
+| `iid-diff-quantity` with `beta=0.1` | `vgg` |100| SCAFFOLD | 90.5% |
+| `iid-diff-quantity` with `beta=0.1` | `resnet` |100| FedAvg | 93.2% |
+|`homo`| `simple-cnn` |50| SCAFFOLD | 71.5% |
