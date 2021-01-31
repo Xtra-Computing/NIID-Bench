@@ -13,15 +13,17 @@ This code runs a benchmark for federated learning algorithms under non-IID data 
 ### Quantity Skew
 * While the data distribution may still be consistent amongthe parties, the size of local dataset varies according to Dirichlet distribution.
 
+## Usage
 Here is one example to run this code:
 ```
 python experiments.py --model=simple-cnn \
     --dataset=cifar10 \
-    --alg=scaffold \
+    --alg=fedprox \
     --lr=0.01 \
     --batch-size=64 \
     --epochs=10 \
     --n_parties=10 \
+    --mu=0.01 \
     --rho=0.9 \
     --comm_round=50 \
     --partition=noniid-labeldir \
@@ -32,3 +34,5 @@ python experiments.py --model=simple-cnn \
     --noise=0
 ```
 
+| Parameter | Explanation |
+| model | The model to experiment with. For most cases of image dataset, we use simple-cnn. We also try vgg & resnet. For tabular dataset, please select mlp. |
