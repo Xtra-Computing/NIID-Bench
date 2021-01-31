@@ -2,6 +2,7 @@
 
 This code runs a benchmark for federated learning algorithms under non-IID data distribution scenarios. Specifically, we implement 4 federated learning algorithms (FedAvg, FedProx, SCAFFOLD & FedNova), 3 types of non-IID settings (label distribution skew, feature distribution skew & quantity skew) and 9 datasets (MNIST, Cifar-10, Fashion-MNIST, SVHN, Generated 3D dataset, FEMNIST, adult, rcv1, covtype).
 
+
 ## Non-IID Settings
 ### Label Distribution Skew
 * **Quantity-based label imbalance**: each party owns data samples of a fixed number of labels.
@@ -12,6 +13,8 @@ This code runs a benchmark for federated learning algorithms under non-IID data 
 * **Real-world feature imbalance**: For FEMNIST, we divide and assign thewriters (and their characters) into each party randomly and equally.
 ### Quantity Skew
 * While the data distribution may still be consistent amongthe parties, the size of local dataset varies according to Dirichlet distribution.
+
+
 
 ## Usage
 Here is one example to run this code:
@@ -57,6 +60,8 @@ python experiments.py --model=simple-cnn \
 | `sample` | Ratio of parties that participate in each communication round. |
 | `init_seed` | The initial seed. |
 
+
+
 ## Data Partition Map
 You can access `net_dataidx_map` in `experiments.py`, line 632. `net_dataidx_map` is a dictionary. Its keys are party ID, and the value of each key is a list containing index of data assigned to this party. For our experiments, we usually set `init_seed=0`. When we repeat experiments of some setting, we change `init_seed` to 1 or 2. The default value of `noise` is 0 unless stated. We list the way to get our data partition as follow.
 ### Label Distribution Skew
@@ -69,5 +74,7 @@ You can access `net_dataidx_map` in `experiments.py`, line 632. `net_dataidx_map
 * `partition`=`iid-diff-quantity`, `mu`=`0.5` or `0.1`
 ### IID Setting
 * `partition`=`homo`
+
+
 
 ## Leader Board
