@@ -48,7 +48,7 @@ python experiments.py --model=simple-cnn \
 | `mu` | The proximal term parameter for FedProx. |
 | `rho` | The parameter controlling the momentum SGD. |
 | `comm_round`    | Number of communication rounds to use. |
-| `partition`    | Tha partition way. Options: `homo`, `noniid-labeldir`, `noniid-#label1` (or 2, 3, ...), `real`, `iid-diff-quantity` |
+| `partition`    | Tha partition way. Options: `homo`, `noniid-labeldir`, `noniid-#label1`, `noniid-#label2`, `noniid-#label3`, `real`, `iid-diff-quantity` |
 | `beta` | The concentration parameter of the Dirichlet distribution for heterogeneous partition. |
 | `device` | Specify the device to run the program. |
 | `datadir` | The path of the dataset. |
