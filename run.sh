@@ -1,13 +1,13 @@
 python experiments.py --model=simple-cnn \
-    --dataset=femnist \
+    --dataset=cifar10 \
     --alg=scaffold \
     --lr=0.01 \
     --batch-size=64 \
-    --epochs=80 \
+    --epochs=10 \
     --n_parties=10 \
     --rho=0.9 \
     --comm_round=50 \
-    --partition=real \
+    --partition=noniid-labeldir \
     --beta=0.5\
     --device='cuda:0'\
     --datadir='./data/' \
