@@ -160,7 +160,9 @@ You can access `net_dataidx_map` in `experiments.py`, line 632. `net_dataidx_map
 |`homo`| `simple-cnn` |500| SCAFFOLD | 10.0% |
 
 
-## Cite
+## Citation
+If you find this repository useful, please cite our paper:
+
 ```
 @article{li2021federated,
       title={Federated Learning on Non-IID Data Silos: An Experimental Study},
