@@ -468,7 +468,7 @@ def train_net_fednova(net_id, net, global_model, train_dataloader, test_dataload
         logger.info('Epoch: %d Loss: %f' % (epoch, epoch_loss))
 
 
-    a_i = tau
+    a_i = (tau - args.rho * (1 - pow(args.rho, tau)) / (1 - args.rho)) / (1 - args.rho)
     global_model_para = global_model.state_dict()
     net_para = net.state_dict()
     norm_grad = copy.deepcopy(global_model.state_dict())
