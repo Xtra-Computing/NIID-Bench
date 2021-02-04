@@ -73,7 +73,17 @@ You can call function `get_partition_dict()` in `experiments.py` to access `net_
 * **Quantity Skew**: `partition`=`iid-diff-quantity`, `mu`=`0.5` or `0.1`
 * **IID Setting**: `partition`=`homo`
 
+Here is explanation of parameter for function `get_partition_dict()`. 
 
+| Parameter                      | Description                                 |
+| ----------------------------- | ---------------------------------------- |
+| `dataset`      | Dataset to use. Options: `mnist`, `cifar10`, `fmnist`, `svhn`, `generated`, `femnist`, `a9a`, `rcv1`, `covtype`. |
+| `partition`    | Tha partition way. Options: `homo`, `noniid-labeldir`, `noniid-#label1` (or 2, 3, ..., which means the fixed number of labels each party owns), `real`, `iid-diff-quantity` |
+| `n_parties` | Number of parties. |
+| `init_seed` | The initial seed. |
+| `datadir` | The path of the dataset. |
+| `logdir` | The path to store the logs. |
+| `beta` | The concentration parameter of the Dirichlet distribution for heterogeneous partition. |
 
 ## Leader Board
 
