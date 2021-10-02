@@ -87,6 +87,8 @@ Here is explanation of parameter for function `get_partition_dict()`.
 
 ## Leader Board
 
+Note that the accuracy shows the average of three experiments, while the training curve is based on only one experiment. Thus, there may be some difference. We show the training curve to compare convergence rate of different algorithms.
+
 ### Quantity-based label imbalance
 * Cifar-10, 10 parties, sample rate = 1, batch size = 64, learning rate = 0.01
 
