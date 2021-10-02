@@ -95,9 +95,10 @@ Here is explanation of parameter for function `get_partition_dict()`.
 | `noniid-#label2` | `simple-cnn` |50| FedProx (`mu=0.01`) | 50.7% |
 | `noniid-#label2` | `simple-cnn` |50| FedAvg | 49.8% |
 | `noniid-#label2` | `simple-cnn` |50| SCAFFOLD | 49.1% |
-| `noniid-#label2` | `simple-cnn` |50| FedNova | 48.9% |
+| `noniid-#label2` | `simple-cnn` |50| FedNova | 46.5% |
 
-![image](figures/10parties/cifar10-iid-diff-quantity.pdf)
+<img src="figures/10parties/cifar10-noniid-label2.png" width="315" height="200" /><br/>
+
 
 * Cifar-10, 100 parties, sample rate = 0.1, batch size = 64, learning rate = 0.01
 
@@ -108,6 +109,8 @@ Here is explanation of parameter for function `get_partition_dict()`.
 | `noniid-#label2` | `simple-cnn` |500| FedProx (`mu=0.001`) | 39.3% |
 | `noniid-#label2` | `simple-cnn` |500| SCAFFOLD | 10.0% |
 
+<img src="figures/100parties/cifar10-lb2.png" width="315" height="200" /><br/>
+
 ### Distribution-based label imbalance
 * Cifar-10, 10 parties, sample rate = 1, batch size = 64, learning rate = 0.01
 
@@ -115,8 +118,10 @@ Here is explanation of parameter for function `get_partition_dict()`.
 | --------------|--------------- | -------------- | ------------ | -------------- | 
 | `noniid-labeldir` with `beta=0.5` | `simple-cnn` |50| SCAFFOLD | 69.8% |
 | `noniid-labeldir` with `beta=0.5` | `simple-cnn` |50| FedAvg | 68.2% |
-| `noniid-labeldir` with `beta=0.5` | `simple-cnn` |50| FedNova | 68.0% |
-| `noniid-labeldir` with `beta=0.5` | `simple-cnn` |50| FedProx (`mu=0.01`) | 67.9% |
+| `noniid-labeldir` with `beta=0.5` | `simple-cnn` |50| FedProx (`mu=0.001`) | 67.9% |
+| `noniid-labeldir` with `beta=0.5` | `simple-cnn` |50| FedNova | 66.8% |
+
+<img src="figures/10parties/cifar10-noniid-labeldir.png" width="315" height="200" /><br/>
 
 | Partition                                 | Model     | Round                       | Algorithm | Accuracy |
 | --------------|--------------- | -------------- | ------------ | -------------- | 
@@ -124,6 +129,8 @@ Here is explanation of parameter for function `get_partition_dict()`.
 | `noniid-labeldir` with `beta=0.1` | `vgg` |100| FedNova | 84.4% |
 | `noniid-labeldir` with `beta=0.1` | `vgg` |100| FedProx (`mu=0.01`) | 84.4% |
 | `noniid-labeldir` with `beta=0.1` | `vgg` |100| FedAvg | 84.0% |
+
+<img src="figures/heavy-model/vgg-lbdir.png" width="315" height="200" /><br/>
 
 * Cifar-10, 100 parties, sample rate = 0.1, batch size = 64, learning rate = 0.01
 
@@ -134,15 +141,19 @@ Here is explanation of parameter for function `get_partition_dict()`.
 | `noniid-labeldir` with `beta=0.5` | `simple-cnn` |500| FedProx (`mu=0.001`) | 58.8% |
 | `noniid-labeldir` with `beta=0.5` | `simple-cnn` |500| SCAFFOLD | 10.0% |
 
+<img src="figures/100parties/cifar10-lbdir.png" width="315" height="200" /><br/>
+
 ### Noise-based feature imbalance
 * Cifar-10, 10 parties, sample rate = 1, batch size = 64, learning rate = 0.01
 
 | Partition                                 | Model     | Round                       | Algorithm | Accuracy |
 | --------------|--------------- | -------------- | ------------ | -------------- | 
 | `homo` with `noise=0.1` | `simple-cnn` |50| SCAFFOLD | 70.1% |
-| `homo` with `noise=0.1` | `simple-cnn` |50| FedNova | 70.0% |
 | `homo` with `noise=0.1` | `simple-cnn` |50| FedProx (`mu=0.01`) | 69.3% |
 | `homo` with `noise=0.1` | `simple-cnn` |50| FedAvg | 68.9% |
+| `homo` with `noise=0.1` | `simple-cnn` |50| FedNova | 68.5% |
+
+<img src="figures/10parties/cifar10-noise.png" width="315" height="200" /><br/>
 
 | Partition                                 | Model     | Round                       | Algorithm | Accuracy |
 | --------------|--------------- | -------------- | ------------ | -------------- | 
@@ -150,6 +161,8 @@ Here is explanation of parameter for function `get_partition_dict()`.
 | `homo` with `noise=0.1` | `resnet` |100| FedNova | 89.4% |
 | `homo` with `noise=0.1` | `resnet` |100| FedProx (`mu=0.01`) | 89.2% |
 | `homo` with `noise=0.1` | `resnet` |100| FedAvg | 89.1% |
+
+<img src="figures/heavy-model/resnet-noise.png" width="315" height="200" /><br/>
 
 ### Quantity Skew
 * Cifar-10, 10 parties, sample rate = 1, batch size = 64, learning rate = 0.01
@@ -159,7 +172,9 @@ Here is explanation of parameter for function `get_partition_dict()`.
 | `iid-diff-quantity` with `beta=0.5` | `simple-cnn` |50| FedAvg | 72.0% |
 | `iid-diff-quantity` with `beta=0.5` | `simple-cnn` |50| FedProx (`mu=0.01`) | 71.2% |
 | `iid-diff-quantity` with `beta=0.5` | `simple-cnn` |50| SCAFFOLD | 62.4% |
-| `iid-diff-quantity` with `beta=0.5` | `simple-cnn` |50| FedNova | 24.4% |
+| `iid-diff-quantity` with `beta=0.5` | `simple-cnn` |50| FedNova | 10.0% |
+
+<img src="figures/10parties/cifar10-iid-diff-quantity.png" width="315" height="200" /><br/>
 
 ### IID Setting
 * Cifar-10, 100 parties, sample rate = 0.1, batch size = 64, learning rate = 0.01
@@ -170,6 +185,8 @@ Here is explanation of parameter for function `get_partition_dict()`.
 |`homo`| `simple-cnn` |500| FedProx (`mu=0.01`) | 66.0% |
 |`homo`| `simple-cnn` |500| FedAvg | 65.6% |
 |`homo`| `simple-cnn` |500| SCAFFOLD | 10.0% |
+
+<img src="figures/100parties/cifar10-homo.png" width="315" height="200" /><br/>
 
 
 ## Citation
