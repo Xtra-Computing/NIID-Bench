@@ -97,6 +97,8 @@ Here is explanation of parameter for function `get_partition_dict()`.
 | `noniid-#label2` | `simple-cnn` |50| SCAFFOLD | 49.1% |
 | `noniid-#label2` | `simple-cnn` |50| FedNova | 48.9% |
 
+![image](figures/10parties/cifar10-iid-diff-quantity.pdf)
+
 * Cifar-10, 100 parties, sample rate = 0.1, batch size = 64, learning rate = 0.01
 
 | Partition                                 | Model     | Round                       | Algorithm | Accuracy |
