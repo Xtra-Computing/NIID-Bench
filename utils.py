@@ -359,6 +359,45 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
         proportions = (np.cumsum(proportions)*len(idxs)).astype(int)[:-1]
         batch_idxs = np.split(idxs,proportions)
         net_dataidx_map = {i: batch_idxs[i] for i in range(n_parties)}
+        
+    elif partition == "mixed":
+        min_size = 0
+        min_require_size = 10
+        K = 10
+        if dataset in ('celeba', 'covtype', 'a9a', 'rcv1', 'SUSY'):
+            K = 2
+            # min_require_size = 100
+
+        N = y_train.shape[0]
+        np.random.seed(2020)
+        net_dataidx_map = {}
+
+        while min_size < min_require_size:
+            idx_batch = [[] for _ in range(n_parties)]
+            for k in range(K):
+                idx_k = np.where(y_train == k)[0]
+                np.random.shuffle(idx_k)
+                proportions = np.random.dirichlet(np.repeat(beta, n_parties))
+
+                proportions = (np.cumsum(proportions) * len(idx_k)).astype(int)[:-1]
+                idx_batch = [idx_j + idx.tolist() for idx_j, idx in zip(idx_batch, np.split(idx_k, proportions))]
+                min_size = min([len(idx_j) for idx_j in idx_batch])
+
+        total = np.array([])
+        for idx_j in idx_batch:
+            total = np.append(total, idx_j)
+
+        total = total.astype(int)
+        min_size = 0
+        while min_size < 10:
+            proportions = np.random.dirichlet(np.repeat(beta, n_parties))
+            proportions = proportions/proportions.sum()
+            min_size = np.min(proportions*n_train)
+        proportions = (np.cumsum(proportions)*n_train).astype(int)[:-1]
+        batch_idxs = np.split(total,proportions)
+
+        for j in range(n_parties):
+            net_dataidx_map[j] = batch_idxs[j]
 
     elif partition == "real" and dataset == "femnist":
         num_user = u_train.shape[0]
