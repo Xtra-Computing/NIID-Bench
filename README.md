@@ -67,11 +67,12 @@ python experiments.py --model=simple-cnn \
 ## Data Partition Map
 You can call function `get_partition_dict()` in `experiments.py` to access `net_dataidx_map`. `net_dataidx_map` is a dictionary. Its keys are party ID, and the value of each key is a list containing index of data assigned to this party. For our experiments, we usually set `init_seed=0`. When we repeat experiments of some setting, we change `init_seed` to 1 or 2. The default value of `noise` is 0 unless stated. We list the way to get our data partition as follow.
 * **Quantity-based label imbalance**: `partition`=`noniid-#label1`, `noniid-#label2` or `noniid-#label3`
-* **Distribution-based label imbalance**: `partition`=`noniid-labeldir`, `mu`=`0.5` or `0.1`
+* **Distribution-based label imbalance**: `partition`=`noniid-labeldir`, `beta`=`0.5` or `0.1`
 * **Noise-based feature imbalance**: `partition`=`homo`, `noise`=`0.1` (actually noise does not affect `net_dataidx_map`)
 * **Synthetic feature imbalance & Real-world feature imbalance**: `partition`=`real`
-* **Quantity Skew**: `partition`=`iid-diff-quantity`, `mu`=`0.5` or `0.1`
+* **Quantity Skew**: `partition`=`iid-diff-quantity`, `beta`=`0.5` or `0.1`
 * **IID Setting**: `partition`=`homo`
+* **Mixed skew**: `partition` = `mixed` for mixture of distribution-based label imbalance and quantity skew; `partition` = `noniid-labeldir` and `noise` = `0.1` for mixture of distribution-based label imbalance and noise-based feature imbalance.
 
 Here is explanation of parameter for function `get_partition_dict()`. 
 
