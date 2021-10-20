@@ -360,7 +360,7 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
         batch_idxs = np.split(idxs,proportions)
         net_dataidx_map = {i: batch_idxs[i] for i in range(n_parties)}
         
-    elif partition == "mixed":
+elif partition == "mixed":
         min_size = 0
         min_require_size = 10
         K = 10
@@ -369,35 +369,47 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
             # min_require_size = 100
 
         N = y_train.shape[0]
-        np.random.seed(2020)
         net_dataidx_map = {}
 
-        while min_size < min_require_size:
-            idx_batch = [[] for _ in range(n_parties)]
-            for k in range(K):
-                idx_k = np.where(y_train == k)[0]
-                np.random.shuffle(idx_k)
-                proportions = np.random.dirichlet(np.repeat(beta, n_parties))
+        times=[1 for i in range(10)]
+        contain=[]
+        for i in range(n_parties):
+            current=[i%K]
+            j=1
+            while (j<2):
+                ind=random.randint(0,K-1)
+                if (ind not in current and times[ind]<2):
+                    j=j+1
+                    current.append(ind)
+                    times[ind]+=1
+            contain.append(current)
+        net_dataidx_map ={i:np.ndarray(0,dtype=np.int64) for i in range(n_parties)}
+        
 
-                proportions = (np.cumsum(proportions) * len(idx_k)).astype(int)[:-1]
-                idx_batch = [idx_j + idx.tolist() for idx_j, idx in zip(idx_batch, np.split(idx_k, proportions))]
-                min_size = min([len(idx_j) for idx_j in idx_batch])
-
-        total = np.array([])
-        for idx_j in idx_batch:
-            total = np.append(total, idx_j)
-
-        total = total.astype(int)
         min_size = 0
         while min_size < 10:
             proportions = np.random.dirichlet(np.repeat(beta, n_parties))
             proportions = proportions/proportions.sum()
             min_size = np.min(proportions*n_train)
-        proportions = (np.cumsum(proportions)*n_train).astype(int)[:-1]
-        batch_idxs = np.split(total,proportions)
 
-        for j in range(n_parties):
-            net_dataidx_map[j] = batch_idxs[j]
+        for i in range(K):
+            idx_k = np.where(y_train==i)[0]
+            np.random.shuffle(idx_k)
+
+            proportions_k = np.random.dirichlet(np.repeat(beta, 2))
+            #proportions_k = np.ndarray(0,dtype=np.float64)
+            #for j in range(n_parties):
+            #    if i in contain[j]:
+            #        proportions_k=np.append(proportions_k ,proportions[j])
+
+            proportions_k = (np.cumsum(proportions_k)*len(idx_k)).astype(int)[:-1]
+
+            split = np.split(idx_k, proportions_k)
+            ids=0
+            for j in range(n_parties):
+                if i in contain[j]:
+                    net_dataidx_map[j]=np.append(net_dataidx_map[j],split[ids])
+                    ids+=1
 
     elif partition == "real" and dataset == "femnist":
         num_user = u_train.shape[0]
