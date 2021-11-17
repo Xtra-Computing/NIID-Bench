@@ -360,7 +360,7 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
         batch_idxs = np.split(idxs,proportions)
         net_dataidx_map = {i: batch_idxs[i] for i in range(n_parties)}
         
-elif partition == "mixed":
+    elif partition == "mixed":
         min_size = 0
         min_require_size = 10
         K = 10
