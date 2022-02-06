@@ -199,7 +199,7 @@ If you find this repository useful, please cite our paper:
 @article{li2021federated,
       title={Federated Learning on Non-IID Data Silos: An Experimental Study},
       author={Li, Qinbin and Diao, Yiqun and Chen, Quan and He, Bingsheng},
-      journal={arXiv preprint arXiv:2102.02079}
+      journal={arXiv preprint arXiv:2102.02079},
       year={2021}
 }
 ```
