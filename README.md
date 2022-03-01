@@ -196,10 +196,10 @@ Note that the accuracy shows the average of three experiments, while the trainin
 If you find this repository useful, please cite our paper:
 
 ```
-@article{li2021federated,
+@inproceedings{li2022federated,
       title={Federated Learning on Non-IID Data Silos: An Experimental Study},
       author={Li, Qinbin and Diao, Yiqun and Chen, Quan and He, Bingsheng},
-      journal={arXiv preprint arXiv:2102.02079},
-      year={2021}
+      booktitle={IEEE International Conference on Data Engineering},
+      year={2022}
 }
 ```
