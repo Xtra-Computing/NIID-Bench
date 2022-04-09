@@ -279,7 +279,7 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
             # min_require_size = 100
 
         N = y_train.shape[0]
-        np.random.seed(2020)
+        #np.random.seed(2020)
         net_dataidx_map = {}
 
         while min_size < min_require_size:
