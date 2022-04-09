@@ -12,6 +12,7 @@ import logging
 import os
 import copy
 from math import *
+import random
 
 import datetime
 #from torch.utils.tensorboard import SummaryWriter
@@ -597,6 +598,7 @@ def get_partition_dict(dataset, partition, n_parties, init_seed=0, datadir='./da
     seed = init_seed
     np.random.seed(seed)
     torch.manual_seed(seed)
+    random.seed(seed)
     X_train, y_train, X_test, y_test, net_dataidx_map, traindata_cls_counts = partition_data(
         dataset, datadir, logdir, partition, n_parties, beta=beta)
 
@@ -636,6 +638,7 @@ if __name__ == '__main__':
     logger.info("#" * 100)
     np.random.seed(seed)
     torch.manual_seed(seed)
+    random.seed(seed)
     logger.info("Partitioning data")
     X_train, y_train, X_test, y_test, net_dataidx_map, traindata_cls_counts = partition_data(
         args.dataset, args.datadir, args.logdir, args.partition, args.n_parties, beta=args.beta)
