@@ -35,6 +35,9 @@ def get_args():
     parser.add_argument('--alg', type=str, default='fedavg',
                             help='fl algorithms: fedavg/fedprox/scaffold/fednova/moon')
     parser.add_argument('--use_projection_head', type=bool, default=False, help='whether add an additional header to model or not (see MOON)')
+    parser.add_argument('--out_dim', type=int, default=256, help='the output dimension for the projection layer')
+    parser.add_argument('--loss', type=str, default='contrastive', help='for moon')
+    parser.add_argument('--temperature', type=float, default=0.5, help='the temperature parameter for contrastive loss')
     parser.add_argument('--comm_round', type=int, default=50, help='number of maximum communication roun')
     parser.add_argument('--is_same_initial', type=int, default=1, help='Whether initial all the models with the same parameters in fedavg')
     parser.add_argument('--init_seed', type=int, default=0, help="Random seed")
@@ -128,11 +131,11 @@ def init_nets(net_configs, dropout_p, n_parties, args):
                     exit(1)
                 nets[net_i] = net
 
-            model_meta_data = []
-            layer_type = []
-            for (k, v) in nets[0].state_dict().items():
-                model_meta_data.append(v.shape)
-                layer_type.append(k)
+    model_meta_data = []
+    layer_type = []
+    for (k, v) in nets[0].state_dict().items():
+        model_meta_data.append(v.shape)
+        layer_type.append(k)
     return nets, model_meta_data, layer_type
 
 
@@ -432,8 +435,8 @@ def train_net_moon(net_id, net, global_net, previous_nets, train_dataloader, tes
 
     logger.info('Training network %s' % str(net_id))
 
-    train_acc = compute_accuracy(net, train_dataloader, device=device)
-    test_acc, conf_matrix = compute_accuracy(net, test_dataloader, get_confusion_matrix=True, device=device)
+    train_acc = compute_accuracy(net, train_dataloader, moon_model=True, device=device)
+    test_acc, conf_matrix = compute_accuracy(net, test_dataloader, get_confusion_matrix=True, moon_model=True, device=device)
 
     logger.info('>> Pre-Training Training accuracy: {}'.format(train_acc))
     logger.info('>> Pre-Training Test accuracy: {}'.format(test_acc))
@@ -449,7 +452,7 @@ def train_net_moon(net_id, net, global_net, previous_nets, train_dataloader, tes
         optimizer = optim.SGD(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, momentum=0.9,
                               weight_decay=args.reg)
 
-    criterion = nn.CrossEntropyLoss().cuda()
+    criterion = nn.CrossEntropyLoss().to(device)
     # global_net.to(device)
 
     if args.loss != 'l2norm':
@@ -466,17 +469,13 @@ def train_net_moon(net_id, net, global_net, previous_nets, train_dataloader, tes
     cnt = 0
     cos=torch.nn.CosineSimilarity(dim=-1)
     # mu = 0.001
-    if args.apply_cosine_lambda:
-        mu = mu * math.cos(math.pi / 2 * round / args.comm_round)
-    elif args.apply_sin_lambda:
-        mu = mu * math.sin(math.pi / 2 * round / args.comm_round)
 
     for epoch in range(epochs):
         epoch_loss_collector = []
         epoch_loss1_collector = []
         epoch_loss2_collector = []
         for batch_idx, (x, target) in enumerate(train_dataloader):
-            x, target = x.cuda(), target.cuda()
+            x, target = x.to(device), target.to(device)
 
             optimizer.zero_grad()
             x.requires_grad = True
@@ -493,7 +492,7 @@ def train_net_moon(net_id, net, global_net, previous_nets, train_dataloader, tes
                 logits = posi.reshape(-1,1)
 
                 for previous_net in previous_nets:
-                    previous_net.cuda()
+                    previous_net.to(device)
                     _, pro3, _ = previous_net(x)
                     nega = cos(pro1, pro3)
                     logits = torch.cat((logits, nega.reshape(-1,1)), dim=1)
@@ -511,7 +510,7 @@ def train_net_moon(net_id, net, global_net, previous_nets, train_dataloader, tes
                     previous_net.to('cpu')
 
                 logits /= temperature
-                labels = torch.zeros(x.size(0)).cuda().long()
+                labels = torch.zeros(x.size(0)).to(device).long()
 
                 # loss = criterion(out, target) + mu * ContraLoss(pro1, pro2, pro3)
 
@@ -540,8 +539,8 @@ def train_net_moon(net_id, net, global_net, previous_nets, train_dataloader, tes
     if args.loss != 'l2norm':
         for previous_net in previous_nets:
             previous_net.to('cpu')
-    train_acc, _ = compute_accuracy(net, train_dataloader, device=device)
-    test_acc, conf_matrix, _ = compute_accuracy(net, test_dataloader, get_confusion_matrix=True, device=device)
+    train_acc = compute_accuracy(net, train_dataloader, moon_model=True, device=device)
+    test_acc, conf_matrix = compute_accuracy(net, test_dataloader, get_confusion_matrix=True, moon_model=True, device=device)
 
     logger.info('>> Training accuracy: %f' % train_acc)
     logger.info('>> Test accuracy: %f' % test_acc)
