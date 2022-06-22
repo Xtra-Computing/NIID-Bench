@@ -74,6 +74,8 @@ def init_nets(net_configs, dropout_p, n_parties, args):
         n_classes = 62
     elif args.dataset == 'emnist':
         n_classes = 47
+    elif args.dataset in {'a9a', 'covtype', 'rcv1', 'SUSY'}:
+        n_classes = 2
     if args.use_projection_head:
         for net_i in range(n_parties):
             net = ModelFedCon(args.model, args.out_dim, n_classes, net_configs)
@@ -497,16 +499,6 @@ def train_net_moon(net_id, net, global_net, previous_nets, train_dataloader, tes
                     nega = cos(pro1, pro3)
                     logits = torch.cat((logits, nega.reshape(-1,1)), dim=1)
 
-                    if args.extend_nega:
-                        oppsi_net = copy.deepcopy(previous_net)
-                        oppsi_w = oppsi_net.state_dict()
-                        prev_w = previous_net.state_dict()
-                        for key in oppsi_w:
-                            oppsi_w[key] = 2 * global_w[key] - prev_w[key]
-                        oppsi_net.load_state_dict(oppsi_w)
-                        _, pro4, _ = oppsi_net(x)
-                        nega = cos(pro1, pro4)
-                        logits = torch.cat((logits, nega.reshape(-1, 1)), dim=1)
                     previous_net.to('cpu')
 
                 logits /= temperature
@@ -1190,8 +1182,8 @@ if __name__ == '__main__':
             logger.info('global n_test: %d' % len(test_dl_global))
 
 
-            train_acc = compute_accuracy(global_model, train_dl_global)
-            test_acc, conf_matrix = compute_accuracy(global_model, test_dl_global, get_confusion_matrix=True)
+            train_acc = compute_accuracy(global_model, train_dl_global, moon_model=True)
+            test_acc, conf_matrix = compute_accuracy(global_model, test_dl_global, get_confusion_matrix=True, moon_model=True)
 
 
             logger.info('>> Global Model Train accuracy: %f' % train_acc)
@@ -1202,11 +1194,9 @@ if __name__ == '__main__':
                 net.eval()
                 for param in net.parameters():
                     param.requires_grad = False
-            if len(old_nets_pool) < args.model_buffer_size:
+            if len(old_nets_pool) < 1:
                 old_nets_pool.append(old_nets)
             else:
-                for i in range(args.model_buffer_size - 2, -1, -1):
-                    old_nets_pool[i] = old_nets_pool[i + 1]
                 old_nets_pool[0] = old_nets
 
     elif args.alg == 'local_training':

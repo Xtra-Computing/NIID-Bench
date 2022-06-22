@@ -221,7 +221,7 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
     #    np.save("data/generated/y_test.npy",y_test)
 
     elif dataset in ('rcv1', 'SUSY', 'covtype'):
-        X_train, y_train = load_svmlight_file("../../../data/{}".format(dataset))
+        X_train, y_train = load_svmlight_file(datadir+dataset)
         X_train = X_train.todense()
         num_train = int(X_train.shape[0] * 0.75)
         if dataset == 'covtype':
@@ -242,8 +242,8 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
         np.save("data/generated/y_test.npy",y_test)
 
     elif dataset in ('a9a'):
-        X_train, y_train = load_svmlight_file("../../../data/{}".format(dataset))
-        X_test, y_test = load_svmlight_file("../../../data/{}.t".format(dataset))
+        X_train, y_train = load_svmlight_file(datadir+"a9a")
+        X_test, y_test = load_svmlight_file(datadir+"a9a.t")
         X_train = X_train.todense()
         X_test = X_test.todense()
         X_test = np.c_[X_test, np.zeros((len(y_test), X_train.shape[1] - np.size(X_test[0, :])))]

@@ -6,21 +6,59 @@ import torchvision.models as models
 from resnetcifar import ResNet18_cifar10, ResNet50_cifar10
 
 
+# class MLP_header(nn.Module):
+#     def __init__(self,):
+#         super(MLP_header, self).__init__()
+#         self.fc1 = nn.Linear(28*28, 512)
+#         self.fc2 = nn.Linear(512, 512)
+#         self.relu = nn.ReLU()
+#         #projection
+#         # self.fc3 = nn.Linear(512, 10)
+#
+#     def forward(self, x):
+#         x = x.view(-1, 28*28)
+#         x = self.fc1(x)
+#         x = self.relu(x)
+#         x = self.fc2(x)
+#         x = self.relu(x)
+#         return x
+
 class MLP_header(nn.Module):
-    def __init__(self,):
-        super(MLP_header, self).__init__()
-        self.fc1 = nn.Linear(28*28, 512)
-        self.fc2 = nn.Linear(512, 512)
-        self.relu = nn.ReLU()
-        #projection
-        # self.fc3 = nn.Linear(512, 10)
+    def __init__(self, input_dim, hidden_dims, dropout_p=0.0):
+
+        super().__init__()
+
+        self.input_dim = input_dim
+        self.hidden_dims = hidden_dims
+        self.dropout_p = dropout_p
+
+        self.dims = [self.input_dim]
+        self.dims.extend(hidden_dims)
+
+        self.layers = nn.ModuleList([])
+
+        for i in range(len(self.dims) - 1):
+            ip_dim = self.dims[i]
+            op_dim = self.dims[i + 1]
+            self.layers.append(
+                nn.Linear(ip_dim, op_dim, bias=True)
+            )
+
+        self.__init_net_weights__()
+
+    def __init_net_weights__(self):
+
+        for m in self.layers:
+            m.weight.data.normal_(0.0, 0.1)
+            m.bias.data.fill_(0.1)
 
     def forward(self, x):
-        x = x.view(-1, 28*28)
-        x = self.fc1(x)
-        x = self.relu(x)
-        x = self.fc2(x)
-        x = self.relu(x)
+        x = x.view(-1, self.input_dim)
+        for i, layer in enumerate(self.layers):
+            x = layer(x)
+            x = F.relu(x)
+
+
         return x
 
 
@@ -541,8 +579,8 @@ class ModelFedCon(nn.Module):
             self.features = nn.Sequential(*list(basemodel.children())[:-1])
             num_ftrs = basemodel.fc.in_features
         elif base_model == "mlp":
-            self.features = MLP_header()
-            num_ftrs = 512
+            self.features = MLP_header(input_dim=net_configs[0], hidden_dims=net_configs[1:-1])
+            num_ftrs = net_configs[-2]
         elif base_model == 'simple-cnn':
             self.features = SimpleCNN_header(input_dim=(16 * 5 * 5), hidden_dims=[120, 84], output_dim=n_classes)
             num_ftrs = 84
@@ -603,8 +641,8 @@ class ModelFedCon_noheader(nn.Module):
             self.features = nn.Sequential(*list(basemodel.children())[:-1])
             num_ftrs = basemodel.fc.in_features
         elif base_model == "mlp":
-            self.features = MLP_header()
-            num_ftrs = 512
+            self.features = MLP_header(input_dim=net_configs[0], hidden_dims=net_configs[1:-1])
+            num_ftrs = net_configs[-2]
         elif base_model == 'simple-cnn':
             self.features = SimpleCNN_header(input_dim=(16 * 5 * 5), hidden_dims=[120, 84], output_dim=n_classes)
             num_ftrs = 84
