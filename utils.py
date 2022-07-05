@@ -422,6 +422,38 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
         for i in range(n_parties):
             for j in batch_idxs[i]:
                 net_dataidx_map[i]=np.append(net_dataidx_map[i], np.arange(user[j], user[j+1]))
+                
+    elif partition == "real":
+        stat = np.load("femnist-dis.npy")
+        n_total = stat.shape[0]
+        chosen = np.random.permutation(n_total)[:n_parties]
+        stat = stat[chosen,:]
+        
+        if dataset in ('celeba', 'covtype', 'a9a', 'rcv1', 'SUSY'):
+            K = 2
+        else:
+            K = 10
+        
+        N = y_train.shape[0]
+        #np.random.seed(2020)
+        net_dataidx_map = {}
+
+        idx_batch = [[] for _ in range(n_parties)]
+        for k in range(K):
+            idx_k = np.where(y_train == k)[0]
+            np.random.shuffle(idx_k)
+            proportions = stat[:,k]
+            # logger.info("proportions2: ", proportions)
+            proportions = proportions / proportions.sum()
+            # logger.info("proportions3: ", proportions)
+            proportions = (np.cumsum(proportions) * len(idx_k)).astype(int)[:-1]
+            # logger.info("proportions4: ", proportions)
+            idx_batch = [idx_j + idx.tolist() for idx_j, idx in zip(idx_batch, np.split(idx_k, proportions))]
+  
+
+        for j in range(n_parties):
+            np.random.shuffle(idx_batch[j])
+            net_dataidx_map[j] = idx_batch[j]
 
     traindata_cls_counts = record_net_data_stats(y_train, net_dataidx_map, logdir)
     return (X_train, y_train, X_test, y_test, net_dataidx_map, traindata_cls_counts)
