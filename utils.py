@@ -221,7 +221,7 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
     #    np.save("data/generated/y_test.npy",y_test)
 
     elif dataset in ('rcv1', 'SUSY', 'covtype'):
-        X_train, y_train = load_svmlight_file("../../../data/{}".format(dataset))
+        X_train, y_train = load_svmlight_file(datadir+dataset)
         X_train = X_train.todense()
         num_train = int(X_train.shape[0] * 0.75)
         if dataset == 'covtype':
@@ -242,8 +242,8 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
         np.save("data/generated/y_test.npy",y_test)
 
     elif dataset in ('a9a'):
-        X_train, y_train = load_svmlight_file("../../../data/{}".format(dataset))
-        X_test, y_test = load_svmlight_file("../../../data/{}.t".format(dataset))
+        X_train, y_train = load_svmlight_file(datadir+"a9a")
+        X_test, y_test = load_svmlight_file(datadir+"a9a.t")
         X_train = X_train.todense()
         X_test = X_test.todense()
         X_test = np.c_[X_test, np.zeros((len(y_test), X_train.shape[1] - np.size(X_test[0, :])))]
@@ -491,7 +491,7 @@ def put_trainable_parameters(net,X):
             params.data.copy_(X[offset:offset+numel].data.view_as(params.data))
         offset+=numel
 
-def compute_accuracy(model, dataloader, get_confusion_matrix=False, device="cpu"):
+def compute_accuracy(model, dataloader, get_confusion_matrix=False, moon_model=False, device="cpu"):
 
     was_training = False
     if model.training:
@@ -510,7 +510,10 @@ def compute_accuracy(model, dataloader, get_confusion_matrix=False, device="cpu"
         for tmp in dataloader:
             for batch_idx, (x, target) in enumerate(tmp):
                 x, target = x.to(device), target.to(device,dtype=torch.int64)
-                out = model(x)
+                if moon_model:
+                    _, _, out = model(x)
+                else:
+                    out = model(x)
                 _, pred_label = torch.max(out.data, 1)
 
                 total += x.data.size()[0]
