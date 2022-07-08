@@ -423,7 +423,7 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
             for j in batch_idxs[i]:
                 net_dataidx_map[i]=np.append(net_dataidx_map[i], np.arange(user[j], user[j+1]))
                 
-    elif partition == "real":
+    elif partition == "transfer-from-femnist":
         stat = np.load("femnist-dis.npy")
         n_total = stat.shape[0]
         chosen = np.random.permutation(n_total)[:n_parties]
