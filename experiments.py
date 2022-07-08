@@ -77,13 +77,19 @@ def init_nets(net_configs, dropout_p, n_parties, args):
     elif args.dataset in {'a9a', 'covtype', 'rcv1', 'SUSY'}:
         n_classes = 2
     if args.use_projection_head:
+        add = ""
+        if "mnist" in args.dataset and args.model == "simple-cnn":
+            add = "-mnist"
         for net_i in range(n_parties):
-            net = ModelFedCon(args.model, args.out_dim, n_classes, net_configs)
+            net = ModelFedCon(args.model+add, args.out_dim, n_classes, net_configs)
             nets[net_i] = net
     else:
         if args.alg == 'moon':
+            add = ""
+            if "mnist" in args.dataset and args.model == "simple-cnn":
+                add = "-mnist"
             for net_i in range(n_parties):
-                net = ModelFedCon_noheader(args.model, args.out_dim, n_classes, net_configs)
+                net = ModelFedCon_noheader(args.model+add, args.out_dim, n_classes, net_configs)
                 nets[net_i] = net
         else:
             for net_i in range(n_parties):
