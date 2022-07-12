@@ -9,6 +9,7 @@ import torch.nn.functional as F
 import random
 from sklearn.metrics import confusion_matrix
 from torch.utils.data import DataLoader
+import copy
 
 from model import *
 from datasets import MNIST_truncated, CIFAR10_truncated, SVHN_custom, FashionMNIST_truncated, CustomTensorDataset, CelebA_custom, FEMNIST, Generated, genData
