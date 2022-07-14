@@ -457,37 +457,31 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
             net_dataidx_map[j] = idx_batch[j]
 
     elif partition == "transfer-from-criteo":
-        stat = np.load("criteo-dis.npy")
-        n_total = stat.shape[0]
-        chosen = np.random.permutation(n_total)[:n_parties]
-        tmp = stat[chosen,:]
+        stat0 = np.load("criteo-dis.npy")
+        
+        n_total = stat0.shape[0]
+        flag=True
+        while (flag):
+            chosen = np.random.permutation(n_total)[:n_parties]
+            stat = stat0[chosen,:]
+            check = [0 for i in range(10)]
+            for ele in stat:
+                for j in range(10):
+                    if ele[j]>0:
+                        check[j]=1
+            flag=False
+            for i in range(10):
+                if check[i]==0:
+                    flag=True
+                    break
+                    
         
         if dataset in ('celeba', 'covtype', 'a9a', 'rcv1', 'SUSY'):
             K = 2
+            stat[:,0]=np.sum(stat[:,:5],axis=1)
+            stat[:,1]=np.sum(stat[:,5:],axis=1)
         else:
             K = 10
-            tmp2 = np.zeros((n_parties,tmp.shape[1]*2))
-            for i in range(tmp.shape[1]):
-                chosen = np.random.permutation(n_total)[:n_parties]
-                rt = stat[chosen,:]
-                tmp2[:,i*2] = tmp[:,i] * rt[:,0] / (rt[:,0]+rt[:,1])
-                tmp2[:,i*2+1] = tmp[:,i] * rt[:,1] / (rt[:,0]+rt[:,1])
-            tmp = copy.deepcopy(tmp2)
-            tmp2 = np.zeros((n_parties,tmp.shape[1]*2))
-            for i in range(tmp.shape[1]):
-                chosen = np.random.permutation(n_total)[:n_parties]
-                rt = stat[chosen,:]
-                tmp2[:,i*2] = tmp[:,i] * rt[:,0] / (rt[:,0]+rt[:,1])
-                tmp2[:,i*2+1] = tmp[:,i] * rt[:,1] / (rt[:,0]+rt[:,1])
-            tmp = copy.deepcopy(tmp2)
-            tmp2 = np.zeros((n_parties,tmp.shape[1]*2))
-            for i in range(tmp.shape[1]):
-                chosen = np.random.permutation(n_total)[:n_parties]
-                rt = stat[chosen,:]
-                tmp2[:,i*2] = tmp[:,i] * rt[:,0] / (rt[:,0]+rt[:,1])
-                tmp2[:,i*2+1] = tmp[:,i] * rt[:,1] / (rt[:,0]+rt[:,1])
-            stat = tmp2[:,:10]
-
         
         N = y_train.shape[0]
         #np.random.seed(2020)
@@ -509,7 +503,7 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
         for j in range(n_parties):
             np.random.shuffle(idx_batch[j])
             net_dataidx_map[j] = idx_batch[j]
-
+            
     traindata_cls_counts = record_net_data_stats(y_train, net_dataidx_map, logdir)
     return (X_train, y_train, X_test, y_test, net_dataidx_map, traindata_cls_counts)
 
