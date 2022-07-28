@@ -138,6 +138,31 @@ def load_femnist_data(datadir):
 
     return (X_train, y_train, u_train, X_test, y_test, u_test)
 
+def load_cifar100_data(datadir):
+    transform = transforms.Compose([transforms.ToTensor()])
+
+    cifar100_train_ds = CIFAR100_truncated(datadir, train=True, download=True, transform=transform)
+    cifar100_test_ds = CIFAR100_truncated(datadir, train=False, download=True, transform=transform)
+
+    X_train, y_train = cifar100_train_ds.data, cifar100_train_ds.target
+    X_test, y_test = cifar100_test_ds.data, cifar100_test_ds.target
+
+    # y_train = y_train.numpy()
+    # y_test = y_test.numpy()
+
+    return (X_train, y_train, X_test, y_test)
+
+
+def load_tinyimagenet_data(datadir):
+    transform = transforms.Compose([transforms.ToTensor()])
+    xray_train_ds = ImageFolder_custom(datadir+'./train/', transform=transform)
+    xray_test_ds = ImageFolder_custom(datadir+'./val/', transform=transform)
+
+    X_train, y_train = np.array([s[0] for s in xray_train_ds.samples]), np.array([int(s[1]) for s in xray_train_ds.samples])
+    X_test, y_test = np.array([s[0] for s in xray_test_ds.samples]), np.array([int(s[1]) for s in xray_test_ds.samples])
+
+    return (X_train, y_train, X_test, y_test)
+
 def record_net_data_stats(y_train, net_dataidx_map, logdir):
 
     net_cls_counts = {}
