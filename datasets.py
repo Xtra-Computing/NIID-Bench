@@ -778,7 +778,7 @@ class CIFAR100_truncated(data.Dataset):
 
 
 class ImageFolder_custom(DatasetFolder):
-    def __init__(self, root, dataidxs=None, train=True, transform=None, target_transform=None):
+    def __init__(self, root, dataidxs=None, train=True, transform=None, target_transform=None, download=None):
         self.root = root
         self.dataidxs = dataidxs
         self.train = train
