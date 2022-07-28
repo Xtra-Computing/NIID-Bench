@@ -746,10 +746,12 @@ def get_dataloader(dataset, datadir, train_bs, test_bs, dataidxs=None, noise_lev
         elif dataset == 'tinyimagenet':
             dl_obj = ImageFolder_custom
             transform_train = transforms.Compose([
+                transforms.Resize(32), 
                 transforms.ToTensor(),
                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
             ])
             transform_test = transforms.Compose([
+                transforms.Resize(32), 
                 transforms.ToTensor(),
                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
             ])
