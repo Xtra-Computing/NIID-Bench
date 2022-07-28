@@ -10,6 +10,7 @@ from typing import Optional, Callable
 from torch.utils.model_zoo import tqdm
 import PIL
 import tarfile
+import torchvision
 
 import os
 import os.path
