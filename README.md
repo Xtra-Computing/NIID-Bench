@@ -5,6 +5,12 @@ This is the code of paper [Federated Learning on Non-IID Data Silos: An Experime
 This code runs a benchmark for federated learning algorithms under non-IID data distribution scenarios. Specifically, we implement 4 federated learning algorithms (FedAvg, FedProx, SCAFFOLD & FedNova), 3 types of non-IID settings (label distribution skew, feature distribution skew & quantity skew) and 9 datasets (MNIST, Cifar-10, Fashion-MNIST, SVHN, Generated 3D dataset, FEMNIST, adult, rcv1, covtype).
 
 
+## Updates on NIID-Bench
+To support more settings and faciliate future researches, we now integrate MOON. We add CIFAR-100 and Tiny-ImageNet. 
+
+###  Tiny-ImageNet
+You can download Tiny-ImageNet [here](http://cs231n.stanford.edu/tiny-imagenet-200.zip). Then, you can follow the [instructions](https://github.com/AI-secure/DBA/blob/master/utils/tinyimagenet_reformat.py) to reformat the validation folder. 
+
 ## Non-IID Settings
 ### Label Distribution Skew
 * **Quantity-based label imbalance**: each party owns data samples of a fixed number of labels.
@@ -190,7 +196,6 @@ Note that the accuracy shows the average of three experiments, while the trainin
 |`homo`| `simple-cnn` |500| SCAFFOLD | 10.0% |
 
 <img src="figures/100parties/cifar10-homo.png" width="315" height="200" /><br/>
-
 
 ## Citation
 If you find this repository useful, please cite our paper:
