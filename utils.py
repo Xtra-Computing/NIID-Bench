@@ -762,8 +762,12 @@ def get_dataloader(dataset, datadir, train_bs, test_bs, dataidxs=None, noise_lev
             transform_test = None
 
 
-        train_ds = dl_obj(datadir, dataidxs=dataidxs, train=True, transform=transform_train, download=True)
-        test_ds = dl_obj(datadir, train=False, transform=transform_test, download=True)
+        if dataset == "tinyimagenet":
+            train_ds = dl_obj(datadir+'./train/', dataidxs=dataidxs, transform=transform_train)
+            test_ds = dl_obj(datadir+'./val/', transform=transform_test)
+        else:
+            train_ds = dl_obj(datadir, dataidxs=dataidxs, train=True, transform=transform_train, download=True)
+            test_ds = dl_obj(datadir, train=False, transform=transform_test, download=True)
 
         train_dl = data.DataLoader(dataset=train_ds, batch_size=train_bs, shuffle=True, drop_last=False)
         test_dl = data.DataLoader(dataset=test_ds, batch_size=test_bs, shuffle=False, drop_last=False)
