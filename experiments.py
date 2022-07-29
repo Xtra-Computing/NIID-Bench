@@ -909,9 +909,9 @@ if __name__ == '__main__':
             logger.info('global n_training: %d' % len(train_dl_global))
             logger.info('global n_test: %d' % len(test_dl_global))
 
-
-            train_acc = compute_accuracy(global_model, train_dl_global)
-            test_acc, conf_matrix = compute_accuracy(global_model, test_dl_global, get_confusion_matrix=True)
+            global_model.to(device)
+            train_acc = compute_accuracy(global_model, train_dl_global, device=device)
+            test_acc, conf_matrix = compute_accuracy(global_model, test_dl_global, get_confusion_matrix=True, device=device)
 
 
             logger.info('>> Global Model Train accuracy: %f' % train_acc)
@@ -968,8 +968,9 @@ if __name__ == '__main__':
             logger.info('global n_test: %d' % len(test_dl_global))
 
 
-            train_acc = compute_accuracy(global_model, train_dl_global)
-            test_acc, conf_matrix = compute_accuracy(global_model, test_dl_global, get_confusion_matrix=True)
+            global_model.to(device)
+            train_acc = compute_accuracy(global_model, train_dl_global, device=device)
+            test_acc, conf_matrix = compute_accuracy(global_model, test_dl_global, get_confusion_matrix=True, device=device)
 
 
             logger.info('>> Global Model Train accuracy: %f' % train_acc)
@@ -1031,10 +1032,9 @@ if __name__ == '__main__':
             logger.info('global n_training: %d' % len(train_dl_global))
             logger.info('global n_test: %d' % len(test_dl_global))
 
-            global_model.to('cpu')
-            train_acc = compute_accuracy(global_model, train_dl_global)
-            test_acc, conf_matrix = compute_accuracy(global_model, test_dl_global, get_confusion_matrix=True)
-
+            global_model.to(device)
+            train_acc = compute_accuracy(global_model, train_dl_global, device=device)
+            test_acc, conf_matrix = compute_accuracy(global_model, test_dl_global, get_confusion_matrix=True, device=device)
 
             logger.info('>> Global Model Train accuracy: %f' % train_acc)
             logger.info('>> Global Model Test accuracy: %f' % test_acc)
@@ -1124,9 +1124,9 @@ if __name__ == '__main__':
             logger.info('global n_training: %d' % len(train_dl_global))
             logger.info('global n_test: %d' % len(test_dl_global))
 
-            global_model.to('cpu')
-            train_acc = compute_accuracy(global_model, train_dl_global)
-            test_acc, conf_matrix = compute_accuracy(global_model, test_dl_global, get_confusion_matrix=True)
+            global_model.to(device)
+            train_acc = compute_accuracy(global_model, train_dl_global, device=device)
+            test_acc, conf_matrix = compute_accuracy(global_model, test_dl_global, get_confusion_matrix=True, device=device)
 
 
             logger.info('>> Global Model Train accuracy: %f' % train_acc)
