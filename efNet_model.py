@@ -2,6 +2,10 @@
    They are built to mirror those in the official TensorFlow implementation.
 """
 
+"""
+new model to be added
+"""
+
 # Author: lukemelas (github username)
 # Github repo: https://github.com/lukemelas/EfficientNet-PyTorch
 # With adjustments and added comments by workingcoder (github username).
