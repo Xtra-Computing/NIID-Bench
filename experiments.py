@@ -475,7 +475,7 @@ def train_net_moon(net_id, net, global_net, previous_nets, train_dataloader, tes
     #         oppsi_w[key] = 2*global_w[key] - prev_w[key]
     #     oppsi_nets.load_state_dict(oppsi_w)
     cnt = 0
-    cos=torch.nn.CosineSimilarity(dim=-1)
+    cos=torch.nn.CosineSimilarity(dim=-1).to(device)
     # mu = 0.001
 
     for epoch in range(epochs):
@@ -505,7 +505,7 @@ def train_net_moon(net_id, net, global_net, previous_nets, train_dataloader, tes
                     nega = cos(pro1, pro3)
                     logits = torch.cat((logits, nega.reshape(-1,1)), dim=1)
 
-                    previous_net.to('cpu')
+                    # previous_net.to('cpu')
 
                 logits /= temperature
                 labels = torch.zeros(x.size(0)).to(device).long()
