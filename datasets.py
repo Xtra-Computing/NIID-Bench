@@ -677,6 +677,12 @@ class FEMNIST(MNIST):
 
     def __len__(self):
         return len(self.data)
+    
+    def _check_exists(self) -> bool:
+        return all(
+            check_integrity(os.path.join(self.raw_folder, os.path.splitext(os.path.basename(url))[0]+os.path.splitext(os.path.basename(url))[1]))
+            for url, _ in self.resources
+        )
 
 
 class Generated(MNIST):
