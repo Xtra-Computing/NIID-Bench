@@ -6,7 +6,7 @@ This code runs a benchmark for federated learning algorithms under non-IID data 
 
 
 ## Updates on NIID-Bench
-Implement `partition.py` to divide tabular datasets in csv format into multiple files using our non-IID partitioning strategy. Column `Class` in the header is recognized as label. See an running example in `partition_to_file.sh`. The example dataset is [Credit Card Fraud Detection](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud).
+Implement `partition.py` to divide tabular datasets (csv format) into multiple files using our non-IID partitioning strategies. Column `Class` in the header is recognized as label. See an running example in `partition_to_file.sh`. The example dataset is [Credit Card Fraud Detection](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud).
 
 To support more settings and faciliate future researches, we now integrate MOON. We add CIFAR-100 and Tiny-ImageNet. 
 
