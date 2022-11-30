@@ -16,9 +16,9 @@ You can download Tiny-ImageNet [here](http://cs231n.stanford.edu/tiny-imagenet-2
 * **Quantity-based label imbalance**: each party owns data samples of a fixed number of labels.
 * **Distribution-based label imbalance**: each party is allocated a proportion of the samples of each label according to Dirichlet distribution.
 ### Feature Distribution Skew
-* **Noise-based feature imbalance**: We first divide the whole datasetinto multiple parties randomly and equally. For each party, we adddifferent levels of Gaussian noises.
+* **Noise-based feature imbalance**: We first divide the whole dataset into multiple parties randomly and equally. For each party, we add different levels of Gaussian noises.
 * **Synthetic feature imbalance**: For generated 3D data set, we allocate two parts which are symmetric of(0,0,0) to a subset for each party.
-* **Real-world feature imbalance**: For FEMNIST, we divide and assign thewriters (and their characters) into each party randomly and equally.
+* **Real-world feature imbalance**: For FEMNIST, we divide and assign the writers (and their characters) into each party randomly and equally.
 ### Quantity Skew
 * While the data distribution may still be consistent amongthe parties, the size of local dataset varies according to Dirichlet distribution.
 
