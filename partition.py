@@ -5,6 +5,7 @@ import random
 import argparse
 import csv
 
+from utils import mkdirs
 def partition_data(dataset, class_id, K, partition, n_parties, beta, seed):
     np.random.seed(seed)
     random.seed(seed)
@@ -133,8 +134,7 @@ if __name__ == '__main__':
     num_class = int(np.max(dataset[:,class_id])) + 1
 
     net_dataidx_map = partition_data(dataset, class_id, num_class, args.partition, args.n_parties, args.beta, args.init_seed)
-    os.system("mkdir "+args.outputdir)
-    os.system("rm "+args.outputdir+"*.csv")
+    mkdirs(args.outputdir)
     for i in range(args.n_parties):
         file_name = args.outputdir+str(i)+'.csv'
         os.system("touch "+file_name)
