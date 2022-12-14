@@ -24,7 +24,7 @@ from resnetcifar import *
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', type=str, default='MLP', help='neural network used in training')
+    parser.add_argument('--model', type=str, default='mlp', help='neural network used in training')
     parser.add_argument('--dataset', type=str, default='mnist', help='dataset used for training')
     parser.add_argument('--net_config', type=lambda x: list(map(int, x.split(', '))))
     parser.add_argument('--partition', type=str, default='homo', help='the data partitioning strategy')
