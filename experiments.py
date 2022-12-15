@@ -722,7 +722,7 @@ def local_train_net_fednova(nets, selected, global_model, args, net_dataidx_map,
 
         a_list.append(a_i)
         d_list.append(d_i)
-        n_i = len(train_dl_local)
+        n_i = len(train_dl_local.dataset)
         n_list.append(n_i)
         logger.info("net %d final test acc %f" % (net_id, testacc))
         avg_acc += testacc
