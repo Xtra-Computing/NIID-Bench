@@ -1214,7 +1214,7 @@ if __name__ == '__main__':
     elif args.alg == 'all_in':
         nets, local_model_meta_data, layer_type = init_nets(args.net_config, args.dropout_p, 1, args)
         n_epoch = args.epochs
-
+        nets[0].to(device)
         trainacc, testacc = train_net(0, nets[0], train_dl_global, test_dl_global, n_epoch, args.lr, args.optimizer, device=device)
 
         logger.info("All in test acc: %f" % testacc)
