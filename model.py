@@ -596,6 +596,7 @@ class ModelFedCon(nn.Module):
 
         # last layer
         self.l3 = nn.Linear(out_dim, n_classes)
+        self.num_ftrs = num_ftrs
 
     def _get_basemodel(self, model_name):
         try:
@@ -607,6 +608,7 @@ class ModelFedCon(nn.Module):
 
     def forward(self, x):
         h = self.features(x)
+        h = h.reshape(-1, self.num_ftrs)
         #print("h before:", h)
         #print("h size:", h.size())
         #h = h.squeeze()
@@ -658,6 +660,7 @@ class ModelFedCon_noheader(nn.Module):
 
         # last layer
         self.l3 = nn.Linear(num_ftrs, n_classes)
+        self.num_ftrs = num_ftrs
 
     def _get_basemodel(self, model_name):
         try:
@@ -669,6 +672,7 @@ class ModelFedCon_noheader(nn.Module):
 
     def forward(self, x):
         h = self.features(x)
+        h = h.reshape(-1, self.num_ftrs)
         #print("h before:", h)
         #print("h size:", h.size())
         #h = h.squeeze()
