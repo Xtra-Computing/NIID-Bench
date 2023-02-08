@@ -216,7 +216,7 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
     logger.info('>> Training accuracy: %f' % train_acc)
     logger.info('>> Test accuracy: %f' % test_acc)
 
-
+    net.to('cpu')
     logger.info(' ** Training complete **')
     return train_acc, test_acc
 
@@ -290,7 +290,7 @@ def train_net_fedprox(net_id, net, global_net, train_dataloader, test_dataloader
     logger.info('>> Training accuracy: %f' % train_acc)
     logger.info('>> Test accuracy: %f' % test_acc)
 
-
+    net.to('cpu')
     logger.info(' ** Training complete **')
     return train_acc, test_acc
 
@@ -368,7 +368,7 @@ def train_net_scaffold(net_id, net, global_model, c_local, c_global, train_datal
     logger.info('>> Training accuracy: %f' % train_acc)
     logger.info('>> Test accuracy: %f' % test_acc)
 
-
+    net.to('cpu')
     logger.info(' ** Training complete **')
     return train_acc, test_acc, c_delta_para
 
@@ -433,7 +433,7 @@ def train_net_fednova(net_id, net, global_model, train_dataloader, test_dataload
     logger.info('>> Training accuracy: %f' % train_acc)
     logger.info('>> Test accuracy: %f' % test_acc)
 
-
+    net.to('cpu')
     logger.info(' ** Training complete **')
     return train_acc, test_acc, a_i, norm_grad
 
@@ -1187,9 +1187,9 @@ if __name__ == '__main__':
             logger.info('global n_training: %d' % len(train_dl_global))
             logger.info('global n_test: %d' % len(test_dl_global))
 
-
-            train_acc = compute_accuracy(global_model, train_dl_global, moon_model=True)
-            test_acc, conf_matrix = compute_accuracy(global_model, test_dl_global, get_confusion_matrix=True, moon_model=True)
+            global_model.to(device)
+            train_acc = compute_accuracy(global_model, train_dl_global, moon_model=True, device=device)
+            test_acc, conf_matrix = compute_accuracy(global_model, test_dl_global, get_confusion_matrix=True, moon_model=True, device=device)
 
 
             logger.info('>> Global Model Train accuracy: %f' % train_acc)
