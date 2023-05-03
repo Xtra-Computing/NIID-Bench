@@ -354,7 +354,7 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
             K = 100
         elif dataset == "tinyimagenet":
             K = 200
-        if num == 10:
+        if K == 10:
             net_dataidx_map ={i:np.ndarray(0,dtype=np.int64) for i in range(n_parties)}
             for i in range(10):
                 idx_k = np.where(y_train==i)[0]
