@@ -1,0 +1,3 @@
+[submodule "git@github.com:jtirana98/NIID-Bench-adhocSL.git"]
+	path = git@github.com:jtirana98/NIID-Bench-adhocSL.git
+	url = git@github.com:jtirana98/adHOC-SL.git
