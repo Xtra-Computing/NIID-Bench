@@ -1,6 +1,9 @@
 import os
 import logging
 import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 import torch
 import torchvision.transforms as transforms
 import torch.utils.data as data
@@ -166,13 +169,26 @@ def load_tinyimagenet_data(datadir):
 def record_net_data_stats(y_train, net_dataidx_map, logdir):
 
     net_cls_counts = {}
-
+    
     for net_i, dataidx in net_dataidx_map.items():
         unq, unq_cnt = np.unique(y_train[dataidx], return_counts=True)
         tmp = {unq[i]: unq_cnt[i] for i in range(len(unq))}
         net_cls_counts[net_i] = tmp
+        
+    dataframe = pd.DataFrame(net_cls_counts).T.fillna(0)
+    dataframe = dataframe.reindex(sorted(dataframe.columns), axis=1)
+    #dataframe.index += 1
+    #print(dataframe)
 
+    plt.title('Data Bins per client')
+    svm = sns.heatmap(dataframe, annot=True, fmt='g', cmap='rocket_r', square=True, linewidth=.5)
+    plt.xlabel('Class')
+    plt.ylabel('Client')
+    figure = svm.get_figure() 
+    figure.savefig('databins/heatmap.png', dpi=400)
+    
     logger.info('Data statistics: %s' % str(net_cls_counts))
+    logger.info('Saved Data bins Heatmap')
 
     return net_cls_counts
 
@@ -354,28 +370,45 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
             K = 100
         elif dataset == "tinyimagenet":
             K = 200
-        if num == 10:
+        if num == K:
             net_dataidx_map ={i:np.ndarray(0,dtype=np.int64) for i in range(n_parties)}
-            for i in range(10):
+            for i in range(K):
                 idx_k = np.where(y_train==i)[0]
                 np.random.shuffle(idx_k)
                 split = np.array_split(idx_k,n_parties)
                 for j in range(n_parties):
                     net_dataidx_map[j]=np.append(net_dataidx_map[j],split[j])
         else:
+            # times=[0 for i in range(K)]
+            # contain=[]
+            # for i in range(n_parties):
+            #     current=[i%K]
+            #     times[i%K]+=1
+            #     j=1
+            #     while (j<num):
+            #         ind=random.randint(0,K-1)
+            #         if (ind not in current):
+            #             j=j+1
+            #             current.append(ind)
+            #             times[ind]+=1
+            #     contain.append(current)
+
+            budget = [num for i in range(K)]
             times=[0 for i in range(K)]
             contain=[]
             for i in range(n_parties):
-                current=[i%K]
-                times[i%K]+=1
-                j=1
-                while (j<num):
-                    ind=random.randint(0,K-1)
-                    if (ind not in current):
-                        j=j+1
-                        current.append(ind)
-                        times[ind]+=1
+                current=[]
+                for j in range(num):
+                    available=[]
+                    max_value = max(budget)
+                    available = [i for i,val in enumerate(budget) if val == max_value]
+                    ind=random.choice(available)
+                    current.append(ind)
+                    times[ind]+=1
+                    budget[ind]-=1
                 contain.append(current)
+
+
             net_dataidx_map ={i:np.ndarray(0,dtype=np.int64) for i in range(n_parties)}
             for i in range(K):
                 idx_k = np.where(y_train==i)[0]

@@ -860,7 +860,8 @@ if __name__ == '__main__':
         test_all_in_ds = data.ConcatDataset(test_all_in_list)
         test_dl_global = data.DataLoader(dataset=test_all_in_ds, batch_size=32, shuffle=False)
 
-
+    if args.alg == 'adhocSL':
+        print("Add code to visualise data bins")
 
     if args.alg == 'fedavg':
         logger.info("Initializing nets")
@@ -916,7 +917,6 @@ if __name__ == '__main__':
 
             logger.info('>> Global Model Train accuracy: %f' % train_acc)
             logger.info('>> Global Model Test accuracy: %f' % test_acc)
-
 
     elif args.alg == 'fedprox':
         logger.info("Initializing nets")

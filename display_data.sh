@@ -1,13 +1,13 @@
 python experiments.py --model=simple-cnn \
 	--dataset=cifar10 \
-	--alg=fednova \
+	--alg=adhocSL \
 	--lr=0.01 \
 	--batch-size=64 \
-	--epochs=10 \
+	--epochs=5 \
 	--n_parties=10 \
 	--rho=0.9 \
 	--comm_round=5 \
-	--partition=noniid-labeldir \
+	--partition=noniid-#label2 \
 	--beta=0.5\
 	--device='cpu'\
 	--datadir='./data/' \
