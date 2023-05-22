@@ -24,7 +24,6 @@ import torch.optim as optim
 import torchvision.utils as vutils
 import time
 import random
-
 from models.mnist_model import Generator, Discriminator, DHead, QHead
 from config import params
 import sklearn.datasets as sk
@@ -184,8 +183,14 @@ def record_net_data_stats(y_train, net_dataidx_map, logdir):
     svm = sns.heatmap(dataframe, annot=True, fmt='g', cmap='rocket_r', square=True, linewidth=.5)
     plt.xlabel('Class')
     plt.ylabel('Client')
-    figure = svm.get_figure() 
-    figure.savefig('databins/heatmap.png', dpi=400)
+    figure = svm.get_figure()
+    
+    directory = "databins"
+    if not os.path.exists(directory):
+        # If it doesn't exist, create it
+        os.makedirs(directory)
+        
+    figure.savefig(f'{directory}/heatmap.png', dpi=400)
     
     logger.info('Data statistics: %s' % str(net_cls_counts))
     logger.info('Saved Data bins Heatmap')
