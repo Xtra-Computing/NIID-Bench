@@ -615,12 +615,19 @@ def put_trainable_parameters(net,X):
             params.data.copy_(X[offset:offset+numel].data.view_as(params.data))
         offset+=numel
 
-def compute_accuracy(model, dataloader, get_confusion_matrix=False, moon_model=False, device="cpu"):
+def compute_accuracy(model, dataloader, get_confusion_matrix=False, moon_model=False, device="cpu", adhoc=False):
 
     was_training = False
-    if model.training:
-        model.eval()
-        was_training = True
+    if adhoc:
+        if model[0].training:
+            model[0].eval()
+            model[1].eval()
+            model[2].eval()
+            was_training = True
+    else:
+        if model.training:
+            model.eval()
+            was_training = True
 
     true_labels_list, pred_labels_list = np.array([]), np.array([])
 
@@ -637,7 +644,17 @@ def compute_accuracy(model, dataloader, get_confusion_matrix=False, moon_model=F
                 if moon_model:
                     _, _, out = model(x)
                 else:
-                    out = model(x)
+                    if adhoc:
+                        out_a = model[0](x)
+                        det_out_a = out_a.clone().detach().requires_grad_(True)
+
+                        out_b = model[1](det_out_a)
+                        det_out_b = out_b.clone().detach().requires_grad_(True)
+
+                        out = model[2](det_out_b)
+
+                    else:
+                        out = model(x)
                 _, pred_label = torch.max(out.data, 1)
 
                 total += x.data.size()[0]
@@ -654,7 +671,10 @@ def compute_accuracy(model, dataloader, get_confusion_matrix=False, moon_model=F
         conf_matrix = confusion_matrix(true_labels_list, pred_labels_list)
 
     if was_training:
-        model.train()
+        if adhoc:
+            model[0].eval()
+            model[1].eval()
+            model[2].eval()
 
     if get_confusion_matrix:
         return correct/float(total), conf_matrix
