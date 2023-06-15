@@ -484,6 +484,8 @@ def train_net_moon(net_id, net, global_net, previous_nets, train_dataloader, tes
         epoch_loss2_collector = []
         for batch_idx, (x, target) in enumerate(train_dataloader):
             x, target = x.to(device), target.to(device)
+            if target.shape[0] == 1:
+                continue
 
             optimizer.zero_grad()
             x.requires_grad = True
