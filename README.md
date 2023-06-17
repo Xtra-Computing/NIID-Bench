@@ -8,6 +8,13 @@ This code runs a benchmark for federated learning algorithms under non-IID data 
 ## Updates on NIID-Bench
 Implement `partition.py` to divide tabular datasets (csv format) into multiple files using our non-IID partitioning strategies. Column `Class` in the header is recognized as label. See an running example in `partition_to_file.sh`. The example dataset is [Credit Card Fraud Detection](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud).
 
+To adapt to your own tabular dataset in ​``partition.py``, you need the following steps:
+
+1. Load your own dataset in arrays. Replace Line 117-126.  
+2. The whole tabular dataset is stored in ​``dataset​​``. The label column ID is stored in ``class_id​​``. Change Line 130 to your own label identifier. 
+
+If your dataset is image dataset, ``partition.py​​`` is no longer applicable. You can refer to our function ``partition_data​​`` in ``utils.py``. You need to design your own dataloader like Line 183-198. For example, in load_mnist_data (Line 40), you need to write a dataloader to return your dataset as tuple (X_train, y_train, X_test, y_test). In terms of the dataloader format, you can refer to class ``MNIST_truncated​​`` (Line 60 in ``dataset.py``). After you get (X_train, y_train, X_test, y_test), the ``partition_data`` function will return the ​``net_dataidx_map``​.
+
 To support more settings and faciliate future researches, we now integrate MOON. We add CIFAR-100 and Tiny-ImageNet. 
 
 ###  Tiny-ImageNet
