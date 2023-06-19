@@ -626,7 +626,7 @@ class ModelFedCon_noheader(nn.Module):
     def __init__(self, base_model, out_dim, n_classes, net_configs=None):
         super(ModelFedCon_noheader, self).__init__()
 
-        if base_model == "resnet50":
+        if base_model == "resnet50" or base_model == "resnet":
             basemodel = models.resnet50(pretrained=False)
             self.features = nn.Sequential(*list(basemodel.children())[:-1])
             num_ftrs = basemodel.fc.in_features
