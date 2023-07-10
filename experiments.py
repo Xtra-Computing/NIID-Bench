@@ -320,6 +320,10 @@ def train_net_scaffold(net_id, net, global_model, c_local, c_global, train_datal
 
     #writer = SummaryWriter()
 
+    c_local.to(device)
+    c_global.to(device)
+    global_model.to(device)
+
     c_global_para = c_global.state_dict()
     c_local_para = c_local.state_dict()
 
