@@ -626,15 +626,15 @@ class ModelFedCon_noheader(nn.Module):
     def __init__(self, base_model, out_dim, n_classes, net_configs=None):
         super(ModelFedCon_noheader, self).__init__()
 
-        if base_model == "resnet50" or base_model == "resnet":
-            basemodel = models.resnet50(pretrained=False)
-            self.features = nn.Sequential(*list(basemodel.children())[:-1])
-            num_ftrs = basemodel.fc.in_features
-        elif base_model == "resnet18":
+        # if base_model == "resnet":
+        #     basemodel = models.resnet50(pretrained=False)
+        #     self.features = nn.Sequential(*list(basemodel.children())[:-1])
+        #     num_ftrs = basemodel.fc.in_features
+        if base_model == "resnet18":
             basemodel = models.resnet18(pretrained=False)
             self.features = nn.Sequential(*list(basemodel.children())[:-1])
             num_ftrs = basemodel.fc.in_features
-        elif base_model == "resnet50-cifar10" or base_model == "resnet50-cifar100" or base_model == "resnet50-smallkernel":
+        elif base_model == "resnet" or base_model == "resnet50-cifar10" or base_model == "resnet50-cifar100" or base_model == "resnet50-smallkernel":
             basemodel = ResNet50_cifar10()
             self.features = nn.Sequential(*list(basemodel.children())[:-1])
             num_ftrs = basemodel.fc.in_features
