@@ -54,7 +54,7 @@ def get_args():
     parser.add_argument('--device', type=str, default='cuda:0', help='The device to run the program')
     parser.add_argument('--log_file_name', type=str, default=None, help='The log file name')
     parser.add_argument('--optimizer', type=str, default='sgd', help='the optimizer')
-    parser.add_argument('--mu', type=float, default=1, help='the mu parameter for fedprox')
+    parser.add_argument('--mu', type=float, default=0.001, help='the mu parameter for fedprox')
     parser.add_argument('--noise', type=float, default=0, help='how much noise we add to some party')
     parser.add_argument('--noise_type', type=str, default='level', help='Different level of noise or different space of noise')
     parser.add_argument('--rho', type=float, default=0, help='Parameter controlling the momentum SGD')
@@ -433,6 +433,10 @@ def train_net_scaffold(net_id, net, global_model, c_local, c_global, train_datal
 
     #writer = SummaryWriter()
 
+    c_local.to(device)
+    c_global.to(device)
+    global_model.to(device)
+
     c_global_para = c_global.state_dict()
     c_local_para = c_local.state_dict()
 
@@ -532,8 +536,9 @@ def train_net_fednova(net_id, net, global_model, train_dataloader, test_dataload
         epoch_loss = sum(epoch_loss_collector) / len(epoch_loss_collector)
         logger.info('Epoch: %d Loss: %f' % (epoch, epoch_loss))
 
-
+    global_model.to(device)
     a_i = (tau - args.rho * (1 - pow(args.rho, tau)) / (1 - args.rho)) / (1 - args.rho)
+    global_model.to(device)
     global_model_para = global_model.state_dict()
     net_para = net.state_dict()
     norm_grad = copy.deepcopy(global_model.state_dict())
@@ -597,6 +602,8 @@ def train_net_moon(net_id, net, global_net, previous_nets, train_dataloader, tes
         epoch_loss2_collector = []
         for batch_idx, (x, target) in enumerate(train_dataloader):
             x, target = x.to(device), target.to(device)
+            if target.shape[0] == 1:
+                continue
 
             optimizer.zero_grad()
             x.requires_grad = True
