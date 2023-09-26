@@ -49,6 +49,33 @@ python experiments.py --model=simple-cnn \
     --init_seed=0
 ```
 
+Run an adhoc experiment:
+```
+python experiments.py --model=resnet \
+    --model_type=resnet18 \
+    --dataset=cifar10 \
+    --alg=adhocSL \
+    --cut_a=3 \
+    --cut_b=5 \
+    --lr=0.01 \
+    --batch-size=64 \
+    --epochs=10 \
+    --n_parties=2 \
+    --mu=0.01 \
+    --rho=0.9 \
+    --comm_round=50 \
+    --partition=noniid-labeldir \
+    --beta=0.5\
+    --device='cpu'\
+    --datadir='./data/' \
+    --logdir='./logs/' \
+    --noise=0 \
+    --sample=1 \
+    --init_seed=0 \
+    --optimizer=adam
+```
+
+
 | Parameter                      | Description                                 |
 | ----------------------------- | ---------------------------------------- |
 | `model` | The model architecture. Options: `simple-cnn`, `vgg`, `resnet`, `mlp`. Default = `mlp`. |
