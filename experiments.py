@@ -147,7 +147,6 @@ def init_nets(net_configs, dropout_p, n_parties, args):
     model_meta_data = []
     layer_type = []
     if args.alg == 'adhocSL':
-        
         for (k, v) in nets[0][0].state_dict().items():
             model_meta_data.append(v.shape)
             layer_type.append(k)
@@ -920,6 +919,7 @@ def get_partition_dict(dataset, partition, n_parties, init_seed=0, datadir='./da
 
     return net_dataidx_map
 
+# MAIN
 if __name__ == '__main__':
     # torch.set_printoptions(profile="full")
     args = get_args()
@@ -1441,5 +1441,4 @@ if __name__ == '__main__':
         trainacc, testacc = train_net(0, nets[0], train_dl_global, test_dl_global, n_epoch, args.lr, args.optimizer, device=device)
 
         logger.info("All in test acc: %f" % testacc)
-
-   
+# END MAIN

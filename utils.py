@@ -315,16 +315,16 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
 
     n_train = y_train.shape[0]
 
-    if partition == "homo":
+    if partition == "homo": # feature distribution - noise 
         idxs = np.random.permutation(n_train)
         batch_idxs = np.array_split(idxs, n_parties)
         net_dataidx_map = {i: batch_idxs[i] for i in range(n_parties)}
 
 
-    elif partition == "noniid-labeldir":
+    elif partition == "noniid-labeldir": #label-distribution skew - distribution
         min_size = 0
         min_require_size = 10
-        K = 10
+        K = 10 # number of samples
         if dataset in ('celeba', 'covtype', 'a9a', 'rcv1', 'SUSY'):
             K = 2
             # min_require_size = 100
@@ -364,7 +364,7 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
             np.random.shuffle(idx_batch[j])
             net_dataidx_map[j] = idx_batch[j]
 
-    elif partition > "noniid-#label0" and partition <= "noniid-#label9":
+    elif partition > "noniid-#label0" and partition <= "noniid-#label9": #label-distribution skew - quantity
         num = eval(partition[13:])
         if dataset in ('celeba', 'covtype', 'a9a', 'rcv1', 'SUSY'):
             num = 1
@@ -384,20 +384,20 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
                 for j in range(n_parties):
                     net_dataidx_map[j]=np.append(net_dataidx_map[j],split[j])
         else:
-            # times=[0 for i in range(K)]
-            # contain=[]
-            # for i in range(n_parties):
-            #     current=[i%K]
-            #     times[i%K]+=1
-            #     j=1
-            #     while (j<num):
-            #         ind=random.randint(0,K-1)
-            #         if (ind not in current):
-            #             j=j+1
-            #             current.append(ind)
-            #             times[ind]+=1
-            #     contain.append(current)
-
+            times=[0 for i in range(K)]
+            contain=[]
+            for i in range(n_parties):
+                current=[i%K]
+                times[i%K]+=1
+                j=1
+                while (j<num):
+                    ind=random.randint(0,K-1)
+                    if (ind not in current):
+                        j=j+1
+                        current.append(ind)
+                        times[ind]+=1
+                contain.append(current)
+            '''
             budget = [num for i in range(K)]
             times=[0 for i in range(K)]
             contain=[]
@@ -411,9 +411,7 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
                     current.append(ind)
                     times[ind]+=1
                     budget[ind]-=1
-                contain.append(current)
-
-
+            '''
             net_dataidx_map ={i:np.ndarray(0,dtype=np.int64) for i in range(n_parties)}
             for i in range(K):
                 idx_k = np.where(y_train==i)[0]
@@ -425,7 +423,7 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
                         net_dataidx_map[j]=np.append(net_dataidx_map[j],split[ids])
                         ids+=1
 
-    elif partition == "iid-diff-quantity":
+    elif partition == "iid-diff-quantity": #quantity
         idxs = np.random.permutation(n_train)
         min_size = 0
         while min_size < 10:
