@@ -116,9 +116,15 @@ def init_nets(net_configs, dropout_p, n_parties, args):
                         output_size = 2
                         hidden_sizes = [16,8]
                     net = FcNet(input_size, hidden_sizes, output_size, dropout_p)
+                
+                # ------ NEW: ADHOC configuration -----
                 elif args.alg == 'adhocSL':
                     if args.model == "resnet":
                         net = resnet_split_model.get_resnet_split(n_classes, args.cut_a, args.cut_b, args.model_type)
+                    elif args.model == 'simple-cnn':
+                        if args.dataset in ("mnist", 'femnist', 'fmnist'):
+                            net = get_simpleCNNMINST_split(args.cut_a, args.cut_b, input_dim=(16 * 4 * 4), hidden_dims=[120, 84], output_dim=10)
+
                 elif args.model == "vgg":
                     net = vgg11()
                 elif args.model == "simple-cnn":
@@ -995,6 +1001,7 @@ if __name__ == '__main__':
         test_all_in_ds = data.ConcatDataset(test_all_in_list)
         test_dl_global = data.DataLoader(dataset=test_all_in_ds, batch_size=32, shuffle=False)
     print(f'HERE IS {args.alg}')
+    #------- New code for ADHOC configuration -----
     if args.alg == 'adhocSL':
         print("Running adhocSL algorithm.")
         
@@ -1040,12 +1047,12 @@ if __name__ == '__main__':
             if (round >= warmup and round % sl_step !=0):
                 data_sharing = True
             else:
-                data_sharing = True
+                data_sharing = False
             
             local_train_net(nets, selected, args, net_dataidx_map, test_dl = test_dl_global, device=device, data_sharing=data_sharing) # CHANGE - data sharing
 
             # update global model
-            # Quesrion: In case of data sharing we take these into account??
+            # Question: In case of data sharing we take these into account??
             total_data_points = sum([len(net_dataidx_map[r]) for r in selected])
             fed_avg_freqs = [len(net_dataidx_map[r]) / total_data_points for r in selected]
 

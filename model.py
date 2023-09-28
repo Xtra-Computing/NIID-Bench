@@ -265,7 +265,7 @@ class SimpleCNNMNIST_header(nn.Module):
         return x
 
 class SimpleCNNMNIST(nn.Module):
-    def __init__(self, input_dim, hidden_dims, output_dim=10):
+    def __init__(self, input_dim, hidden_dims, output_dim=10, first_cut=-1, last_cut=-1):
         super(SimpleCNNMNIST, self).__init__()
         self.conv1 = nn.Conv2d(1, 6, 5)
         self.pool = nn.MaxPool2d(2, 2)
@@ -277,15 +277,73 @@ class SimpleCNNMNIST(nn.Module):
         self.fc2 = nn.Linear(hidden_dims[0], hidden_dims[1])
         self.fc3 = nn.Linear(hidden_dims[1], output_dim)
 
-    def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 4 * 4)
+        self.first_cut = first_cut
+        self.last_cut = last_cut
 
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
+    def forward(self, x):
+        layer = 0
+        start = False
+        end = False
+        
+        if self.last_cut == -1:
+            end = True
+
+        if self.start_cut == -1:
+            start = True
+
+
+        if start or (not start and (self.first_cut == layer or self.first_cut == -1)): #when to start
+            # have already started, or just started
+            if end or (not end and (self.last_cut < layer or self.last_cut == -1)):
+                # check we are not in end
+                x = self.pool(F.relu(self.conv1(x)))
+            else:
+                # reached end
+                return x
+            layer += 1
+        
+        if start or (not start and (self.first_cut == layer or self.first_cut == -1)): #when to start
+            # have already started, or just started
+            if end or (not end and (self.last_cut < layer or self.last_cut == -1)):
+                # check we are not in end
+                x = self.pool(F.relu(self.conv2(x)))
+                x = x.view(-1, 16 * 4 * 4)
+            else:
+                # reached end
+                return x
+            layer += 1    
+
+        if start or (not start and (self.first_cut == layer or self.first_cut == -1)): #when to start
+            # have already started, or just started
+            if end or (not end and (self.last_cut < layer or self.last_cut == -1)):
+                # check we are not in end
+                x = F.relu(self.fc1(x))
+            else:
+                # reached end
+                return x
+            layer += 1    
+
+        if start or (not start and (self.first_cut == layer or self.first_cut == -1)): #when to start
+            # have already started, or just started
+            if end or (not end and (self.last_cut < layer or self.last_cut == -1)):
+                # check we are not in end
+                x = F.relu(self.fc2(x))
+            else:
+                # reached end
+                return x
+            layer += 1    
+        
         x = self.fc3(x)
         return x
+    
+# ------ NEW: ADHOC configuration -----    
+def get_simpleCNNMINST_split(first_cut, last_cut, input_dim, hidden_dims, output_dim=10):
+
+    model_part_a = SimpleCNNMNIST(input_dim, hidden_dims, output_dim, -1, first_cut)
+    model_part_b = SimpleCNNMNIST(input_dim, hidden_dims, output_dim, first_cut, last_cut)
+    model_part_c = SimpleCNNMNIST(input_dim, hidden_dims, output_dim, -1, first_cut)
+
+    return (model_part_a, model_part_b, model_part_c)
 
 
 class SimpleCNNContainer(nn.Module):
