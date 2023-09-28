@@ -366,6 +366,7 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
 
     elif partition > "noniid-#label0" and partition <= "noniid-#label9": #label-distribution skew - quantity
         num = eval(partition[13:])
+        print(f'the num is {num}')
         if dataset in ('celeba', 'covtype', 'a9a', 'rcv1', 'SUSY'):
             num = 1
             K = 2
@@ -375,9 +376,9 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
             K = 100
         elif dataset == "tinyimagenet":
             K = 200
-        if num == K:
+        if num == 10:
             net_dataidx_map ={i:np.ndarray(0,dtype=np.int64) for i in range(n_parties)}
-            for i in range(K):
+            for i in range(10):
                 idx_k = np.where(y_train==i)[0]
                 np.random.shuffle(idx_k)
                 split = np.array_split(idx_k,n_parties)
@@ -386,17 +387,37 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
         else:
             times=[0 for i in range(K)]
             contain=[]
-            for i in range(n_parties):
-                current=[i%K]
-                times[i%K]+=1
-                j=1
-                while (j<num):
-                    ind=random.randint(0,K-1)
-                    if (ind not in current):
-                        j=j+1
-                        current.append(ind)
-                        times[ind]+=1
-                contain.append(current)
+            used = []
+            #NOTE:  if num < k/_parties is there any point of that?
+            if num == int(K/n_parties):
+                for i in range(n_parties):
+                    current=[i%K]
+                    used.append(i%K) 
+                    times[i%K]+=1
+                    j=1
+                    while (j<num):
+                        ind=random.randint(0,K-1)
+                        if ((ind not in current )and (ind not in used)):
+                            j=j+1
+                            current.append(ind)
+                            used.append(ind) 
+                            times[ind]+=1
+                    print(current)
+                    contain.append(current)
+            
+            else:
+                for i in range(n_parties):
+                    current=[i%K]
+                    times[i%K]+=1
+                    j=1
+                    while (j<num):
+                        ind=random.randint(0,K-1)
+                        if (ind not in current):
+                            j=j+1
+                            current.append(ind)
+                            times[ind]+=1
+                    print(current)
+                    contain.append(current)
             '''
             budget = [num for i in range(K)]
             times=[0 for i in range(K)]
