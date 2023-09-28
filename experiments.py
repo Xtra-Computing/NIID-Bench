@@ -679,7 +679,7 @@ def view_image(train_dataloader):
         exit(0)
 
 
-def local_train_net(nets, selected, args, net_dataidx_map, test_dl = None, device="cpu", data_sharing=False):
+def local_train_net(nets, selected, args, net_dataidx_map, test_dl = None, device="cpu", data_sharing=False, helpers=[]):
     avg_acc = 0.0
 
     step = 0
@@ -925,6 +925,51 @@ def get_partition_dict(dataset, partition, n_parties, init_seed=0, datadir='./da
 
     return net_dataidx_map
 
+#----- NEW AD-HOC configuration -----
+def find_helpers(dataset, net_dataidx_map, n_parties, traindata_cls_counts):
+    K = 0
+    if dataset in ('celeba', 'covtype', 'a9a', 'rcv1', 'SUSY'):
+        K = 2
+    else:
+        K = 10
+    if dataset == "cifar100":
+        K = 100
+    elif dataset == "tinyimagenet":
+        K = 200
+
+    helpers = {}
+    for i in range(n_parties):
+        helpers.update({i:[]})
+    
+    for k in range(K):
+        times = [0 for i in range(n_parties)]
+        for i in range(n_parties):
+            distribution = traindata_cls_counts[i]
+            times[i] = distribution[k]
+        
+        order = np.argsort(times)
+        sorted_times = sorted(times)
+
+        itr = -1
+        for j in range(n_parties):
+            if sorted_times[j] != 0:
+                itr  = j
+                break
+        threshold = -1
+        # naive policy for threshold
+        if itr < int(n_parties/2):
+            threshold = int(n_parties/2)
+        else:
+            threshold = itr
+
+        for j in range(threshold):
+            need_help = order[j]
+            send_help = order[-j-1]        
+            if send_help not in helpers[need_help]:
+                helpers[need_help].append(send_help)
+        
+    return helpers
+
 # MAIN
 if __name__ == '__main__':
     # torch.set_printoptions(profile="full")
@@ -1008,6 +1053,9 @@ if __name__ == '__main__':
         warmup = 10
         sl_step = 2
 
+        # initialize the communication graph for the sl-rounds
+        graph_comm = find_helpers(args.dataset, net_dataidx_map, args.n_parties, traindata_cls_counts)
+
         logger.info("Initializing nets")
         nets, local_model_meta_data, layer_type = init_nets(args.net_config, args.dropout_p, args.n_parties, args)
         global_models, global_model_meta_data, global_layer_type = init_nets(args.net_config, 0, 1, args)
@@ -1044,12 +1092,14 @@ if __name__ == '__main__':
                     nets[idx][1].load_state_dict(global_para_b)
                     nets[idx][2].load_state_dict(global_para_c)
 
+            helpers = []
             if (round >= warmup and round % sl_step !=0):
                 data_sharing = True
+                helpers = []
             else:
                 data_sharing = False
             
-            local_train_net(nets, selected, args, net_dataidx_map, test_dl = test_dl_global, device=device, data_sharing=data_sharing) # CHANGE - data sharing
+            local_train_net(nets, selected, args, net_dataidx_map, test_dl = test_dl_global, device=device, data_sharing=data_sharing, helpers=helpers)
 
             # update global model
             # Question: In case of data sharing we take these into account??

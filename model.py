@@ -288,7 +288,7 @@ class SimpleCNNMNIST(nn.Module):
         if self.last_cut == -1:
             end = True
 
-        if self.start_cut == -1:
+        if self.first_cut == -1:
             start = True
 
 
@@ -332,7 +332,7 @@ class SimpleCNNMNIST(nn.Module):
                 # reached end
                 return x
             layer += 1    
-        
+
         x = self.fc3(x)
         return x
     
