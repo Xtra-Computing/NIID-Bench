@@ -245,9 +245,6 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
             optimizer = optim.SGD(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
     criterion = nn.CrossEntropyLoss().to(device)
 
-    if not data_sharing:
-        train_dataloader = [train_dataloader]
-
     cnt = 0
     if type(train_dataloader) == type([1]):
         pass
@@ -259,68 +256,67 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
     for epoch in range(epochs):
         epoch_loss_collector = []
         i_helper = 0
-        for dataload in train_dataloader:
-            for tmp in dataload:
-                for batch_idx, (x, target) in enumerate(tmp):
-                    x, target = x.to(device), target.to(device)
-                    if adhoc:
-                        optimizer_b.zero_grad()
-                        if not data_sharing:
-                            #for ii in range(len(helpers)):
-                            #    optimizer_a[ii].zero_grad()
-                            #    optimizer_c[ii].zero_grad()
-                            optimizer_a.zero_grad()
-                            optimizer_c.zero_grad()
-                    else:    
-                        optimizer.zero_grad()
-                    x.requires_grad = True
-                    target.requires_grad = False
-                    target = target.long()
-                    if adhoc:
-                            if data_sharing:
-                                out_a = net[i_helper][0](x)
-                                det_out_a = out_a.clone().detach().requires_grad_(True)
-
-                                out_b = net[net_id][1](det_out_a)
-                                det_out_b = out_b.clone().detach().requires_grad_(True)
-
-                                out = net[i_helper][2](det_out_b)
-                            else:
-                                out_a = net[0](x)
-                                det_out_a = out_a.clone().detach().requires_grad_(True)
-
-                                out_b = net[1](det_out_a)
-                                det_out_b = out_b.clone().detach().requires_grad_(True)
-
-                                out = net[2](det_out_b)
-                    else:
-                        out = net(x)
-                        
-                    loss = criterion(out, target)
-
-                    loss.backward()
-
-                    if adhoc:
+        for tmp in train_dataloader:
+            for batch_idx, (x, target) in enumerate(tmp):
+                x, target = x.to(device), target.to(device)
+                if adhoc:
+                    optimizer_b.zero_grad()
+                    if not data_sharing:
+                        #for ii in range(len(helpers)):
+                        #    optimizer_a[ii].zero_grad()
+                        #    optimizer_c[ii].zero_grad()
+                        optimizer_a.zero_grad()
+                        optimizer_c.zero_grad()
+                else:    
+                    optimizer.zero_grad()
+                x.requires_grad = True
+                target.requires_grad = False
+                target = target.long()
+                if adhoc:
                         if data_sharing:
-                            grad_b = det_out_b.grad.clone().detach()
-                            out_b.backward(grad_b)
-                            optimizer_b.step()
+                            out_a = net[i_helper][0](x)
+                            det_out_a = out_a.clone().detach().requires_grad_(True)
+
+                            out_b = net[net_id][1](det_out_a)
+                            det_out_b = out_b.clone().detach().requires_grad_(True)
+
+                            out = net[i_helper][2](det_out_b)
                         else:
-                            optimizer_c.step()
+                            out_a = net[0](x)
+                            det_out_a = out_a.clone().detach().requires_grad_(True)
 
-                            grad_b = det_out_b.grad.clone().detach()
-                            out_b.backward(grad_b)
-                            optimizer_b.step()
+                            out_b = net[1](det_out_a)
+                            det_out_b = out_b.clone().detach().requires_grad_(True)
 
-                            grad_a = det_out_a.grad.clone().detach()
-                            out_a.backward(grad_a)
+                            out = net[2](det_out_b)
+                else:
+                    out = net(x)
+                    
+                loss = criterion(out, target)
 
-                            optimizer_a.step()
+                loss.backward()
+
+                if adhoc:
+                    if data_sharing:
+                        grad_b = det_out_b.grad.clone().detach()
+                        out_b.backward(grad_b)
+                        optimizer_b.step()
                     else:
-                        optimizer.step()
+                        optimizer_c.step()
 
-                    cnt += 1
-                    epoch_loss_collector.append(loss.item())
+                        grad_b = det_out_b.grad.clone().detach()
+                        out_b.backward(grad_b)
+                        optimizer_b.step()
+
+                        grad_a = det_out_a.grad.clone().detach()
+                        out_a.backward(grad_a)
+
+                        optimizer_a.step()
+                else:
+                    optimizer.step()
+
+                cnt += 1
+                epoch_loss_collector.append(loss.item())
             i_helper += 1
 
         epoch_loss = sum(epoch_loss_collector) / len(epoch_loss_collector)

@@ -291,48 +291,56 @@ class SimpleCNNMNIST(nn.Module):
         if self.first_cut == -1:
             start = True
 
-
-        if start or (not start and (self.first_cut == layer or self.first_cut == -1)): #when to start
+        # layer 0
+        if start or ((not start) and (self.first_cut == layer)): #when to start
             # have already started, or just started
-            if end or (not end and (self.last_cut < layer or self.last_cut == -1)):
+            if end or ((not end) and (self.last_cut > layer)):
                 # check we are not in end
                 x = self.pool(F.relu(self.conv1(x)))
+                start = True
             else:
                 # reached end
                 return x
-            layer += 1
-        
-        if start or (not start and (self.first_cut == layer or self.first_cut == -1)): #when to start
+        layer += 1
+
+        # layer 1
+        if start or (not start and (self.first_cut == layer)): #when to start
             # have already started, or just started
-            if end or (not end and (self.last_cut < layer or self.last_cut == -1)):
+            if end or (not end and (self.last_cut > layer)):
                 # check we are not in end
                 x = self.pool(F.relu(self.conv2(x)))
                 x = x.view(-1, 16 * 4 * 4)
+                start = True
             else:
                 # reached end
                 return x
-            layer += 1    
+        layer += 1    
 
-        if start or (not start and (self.first_cut == layer or self.first_cut == -1)): #when to start
+        # layer 2
+        if start or (not start and (self.first_cut == layer)): #when to start
             # have already started, or just started
-            if end or (not end and (self.last_cut < layer or self.last_cut == -1)):
+            if end or (not end and (self.last_cut > layer)):
                 # check we are not in end
                 x = F.relu(self.fc1(x))
+                start = True
             else:
                 # reached end
                 return x
-            layer += 1    
+        layer += 1    
 
-        if start or (not start and (self.first_cut == layer or self.first_cut == -1)): #when to start
+        # layer 3
+        if start or (not start and (self.first_cut == layer)): #when to start
             # have already started, or just started
-            if end or (not end and (self.last_cut < layer or self.last_cut == -1)):
+            if end or (not end and (self.last_cut > layer)):
                 # check we are not in end
                 x = F.relu(self.fc2(x))
+                start = True
             else:
                 # reached end
                 return x
-            layer += 1    
+        layer += 1    
 
+        # layer 4
         x = self.fc3(x)
         return x
     
@@ -341,7 +349,7 @@ def get_simpleCNNMINST_split(first_cut, last_cut, input_dim, hidden_dims, output
 
     model_part_a = SimpleCNNMNIST(input_dim, hidden_dims, output_dim, -1, first_cut)
     model_part_b = SimpleCNNMNIST(input_dim, hidden_dims, output_dim, first_cut, last_cut)
-    model_part_c = SimpleCNNMNIST(input_dim, hidden_dims, output_dim, -1, first_cut)
+    model_part_c = SimpleCNNMNIST(input_dim, hidden_dims, output_dim, last_cut, -1)
 
     return (model_part_a, model_part_b, model_part_c)
 
