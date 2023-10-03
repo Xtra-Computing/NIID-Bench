@@ -172,12 +172,12 @@ def init_nets(net_configs, dropout_p, n_parties, args):
     return nets, model_meta_data, layer_type
 
 
-def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_optimizer, device="cpu", adhoc=False, data_sharing=False):
+def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_optimizer, device="cpu", adhoc=False, data_sharing=False, helpers=[]):
     logger.info('Training network %s' % str(net_id))
     
     if data_sharing:
-        train_acc = compute_accuracy(net[0], train_dataloader, device=device, adhoc=adhoc)
-        test_acc, conf_matrix = compute_accuracy(net[0], test_dataloader, get_confusion_matrix=True, device=device, adhoc=adhoc)
+        train_acc = compute_accuracy(net[net_id], train_dataloader, device=device, adhoc=adhoc)
+        test_acc, conf_matrix = compute_accuracy(net[net_id], test_dataloader, get_confusion_matrix=True, device=device, adhoc=adhoc)
     else:
         train_acc = compute_accuracy(net, train_dataloader, device=device, adhoc=adhoc)
         test_acc, conf_matrix = compute_accuracy(net, test_dataloader, get_confusion_matrix=True, device=device, adhoc=adhoc)
@@ -189,9 +189,13 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
         if adhoc:
             if data_sharing:
                 logger.info('Data sharing round')
-                optimizer_a = optim.Adam(filter(lambda p: p.requires_grad, net[net_id][0].parameters()), lr=lr, weight_decay=args.reg)
-                optimizer_b = optim.Adam(filter(lambda p: p.requires_grad, net[1-net_id][1].parameters()), lr=lr, weight_decay=args.reg)
-                optimizer_c = optim.Adam(filter(lambda p: p.requires_grad, net[net_id][2].parameters()), lr=lr, weight_decay=args.reg)
+                optimizer_b = optim.Adam(filter(lambda p: p.requires_grad, net[net_id][1].parameters()), lr=lr, weight_decay=args.reg)
+                optimizer_a =[]
+                optimizer_c = []
+
+                for i in range(len(helpers)):
+                    optimizer_a.append(optim.Adam(filter(lambda p: p.requires_grad, net[helpers[i]][0].parameters()), lr=lr, weight_decay=args.reg))
+                    optimizer_c.append(optim.Adam(filter(lambda p: p.requires_grad, net[helpers[i]][2].parameters()), lr=lr, weight_decay=args.reg))
             else:
                 optimizer_a = optim.Adam(filter(lambda p: p.requires_grad, net[0].parameters()), lr=lr, weight_decay=args.reg)
                 optimizer_b = optim.Adam(filter(lambda p: p.requires_grad, net[1].parameters()), lr=lr, weight_decay=args.reg)
@@ -201,12 +205,17 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
     elif args_optimizer == 'amsgrad':
         if adhoc:
             if data_sharing:
-                optimizer_a = optim.Adam(filter(lambda p: p.requires_grad, net[net_id][0].parameters()), lr=lr, weight_decay=args.reg,
+                logger.info('Data sharing round')
+                optimizer_b = optim.Adam(filter(lambda p: p.requires_grad, net[net_id][1].parameters()), lr=lr, weight_decay=args.reg,
                                 amsgrad=True)
-                optimizer_b = optim.Adam(filter(lambda p: p.requires_grad, net[1-net_id][1].parameters()), lr=lr, weight_decay=args.reg,
-                                amsgrad=True)
-                optimizer_c = optim.Adam(filter(lambda p: p.requires_grad, net[net_id][2].parameters()), lr=lr, weight_decay=args.reg,
-                                amsgrad=True)
+                optimizer_a =[]
+                optimizer_c = []
+
+                for i in range(len(helpers)):
+                    optimizer_a.append(optim.Adam(filter(lambda p: p.requires_grad, net[helpers[i]][0].parameters()), lr=lr, weight_decay=args.reg,
+                                amsgrad=True))
+                    optimizer_c.append(optim.Adam(filter(lambda p: p.requires_grad, net[helpers[i]][2].parameters()), lr=lr, weight_decay=args.reg,
+                                amsgrad=True))
             else:
                 optimizer_a = optim.Adam(filter(lambda p: p.requires_grad, net[0].parameters()), lr=lr, weight_decay=args.reg,
                                 amsgrad=True)
@@ -220,9 +229,14 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
     elif args_optimizer == 'sgd':
         if adhoc:
             if data_sharing:
-                optimizer_a = optim.SGD(filter(lambda p: p.requires_grad, net[net_id].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
-                optimizer_b = optim.SGD(filter(lambda p: p.requires_grad, net[1-net_id].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
-                optimizer_c = optim.SGD(filter(lambda p: p.requires_grad, net[net_id].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
+                logger.info('Data sharing round')
+                optimizer_b = optim.SGD(filter(lambda p: p.requires_grad, net[net_id].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
+                optimizer_a =[]
+                optimizer_c = []
+
+                for i in range(len(helpers)):
+                    optimizer_a.append(optim.SGD(filter(lambda p: p.requires_grad, net[helpers[i]].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg))
+                    optimizer_c.append(optim.SGD(filter(lambda p: p.requires_grad, net[helpers[i]].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg))
             else:
                 optimizer_a = optim.SGD(filter(lambda p: p.requires_grad, net[0].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
                 optimizer_b = optim.SGD(filter(lambda p: p.requires_grad, net[1].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
@@ -230,6 +244,9 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
         else:
             optimizer = optim.SGD(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
     criterion = nn.CrossEntropyLoss().to(device)
+
+    if not data_sharing:
+        train_dataloader = [train_dataloader]
 
     cnt = 0
     if type(train_dataloader) == type([1]):
@@ -241,75 +258,73 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
     
     for epoch in range(epochs):
         epoch_loss_collector = []
-        for tmp in train_dataloader:
-            for batch_idx, (x, target) in enumerate(tmp):
-                x, target = x.to(device), target.to(device)
-                if adhoc:
-                    optimizer_a.zero_grad()
-                    optimizer_b.zero_grad()
-                    optimizer_c.zero_grad()
-                else:    
-                    optimizer.zero_grad()
-                x.requires_grad = True
-                target.requires_grad = False
-                target = target.long()
-                if adhoc:
+        i_helper = 0
+        for dataload in train_dataloader:
+            for tmp in dataload:
+                for batch_idx, (x, target) in enumerate(tmp):
+                    x, target = x.to(device), target.to(device)
+                    if adhoc:
+                        optimizer_b.zero_grad()
+                        if not data_sharing:
+                            #for ii in range(len(helpers)):
+                            #    optimizer_a[ii].zero_grad()
+                            #    optimizer_c[ii].zero_grad()
+                            optimizer_a.zero_grad()
+                            optimizer_c.zero_grad()
+                    else:    
+                        optimizer.zero_grad()
+                    x.requires_grad = True
+                    target.requires_grad = False
+                    target = target.long()
+                    if adhoc:
+                            if data_sharing:
+                                out_a = net[i_helper][0](x)
+                                det_out_a = out_a.clone().detach().requires_grad_(True)
+
+                                out_b = net[net_id][1](det_out_a)
+                                det_out_b = out_b.clone().detach().requires_grad_(True)
+
+                                out = net[i_helper][2](det_out_b)
+                            else:
+                                out_a = net[0](x)
+                                det_out_a = out_a.clone().detach().requires_grad_(True)
+
+                                out_b = net[1](det_out_a)
+                                det_out_b = out_b.clone().detach().requires_grad_(True)
+
+                                out = net[2](det_out_b)
+                    else:
+                        out = net(x)
+                        
+                    loss = criterion(out, target)
+
+                    loss.backward()
+
+                    if adhoc:
                         if data_sharing:
-                            out_a = net[net_id][0](x)
-                            det_out_a = out_a.clone().detach().requires_grad_(True)
-
-                            out_b = net[1-net_id][1](det_out_a)
-                            det_out_b = out_b.clone().detach().requires_grad_(True)
-
-                            out = net[net_id][2](det_out_b)
+                            grad_b = det_out_b.grad.clone().detach()
+                            out_b.backward(grad_b)
+                            optimizer_b.step()
                         else:
-                            out_a = net[0](x)
-                            det_out_a = out_a.clone().detach().requires_grad_(True)
+                            optimizer_c.step()
 
-                            out_b = net[1](det_out_a)
-                            det_out_b = out_b.clone().detach().requires_grad_(True)
+                            grad_b = det_out_b.grad.clone().detach()
+                            out_b.backward(grad_b)
+                            optimizer_b.step()
 
-                            out = net[2](det_out_b)
-                else:
-                    out = net(x)
-                    
-                loss = criterion(out, target)
+                            grad_a = det_out_a.grad.clone().detach()
+                            out_a.backward(grad_a)
 
-                loss.backward()
+                            optimizer_a.step()
+                    else:
+                        optimizer.step()
 
-                if adhoc:
-                    optimizer_c.step()
-
-                    grad_b = det_out_b.grad.clone().detach()
-                    out_b.backward(grad_b)
-                    optimizer_b.step()
-
-                    grad_a = det_out_a.grad.clone().detach()
-                    out_a.backward(grad_a)
-
-                    optimizer_a.step()
-                else:
-                    optimizer.step()
-
-                cnt += 1
-                epoch_loss_collector.append(loss.item())
+                    cnt += 1
+                    epoch_loss_collector.append(loss.item())
+            i_helper += 1
 
         epoch_loss = sum(epoch_loss_collector) / len(epoch_loss_collector)
         logger.info('Epoch: %d Loss: %f' % (epoch, epoch_loss))
-        
-        #train_acc = compute_accuracy(net, train_dataloader, device=device)
-        #test_acc, conf_matrix = compute_accuracy(net, test_dataloader, get_confusion_matrix=True, device=device)
-
-        #writer.add_scalar('Accuracy/train', train_acc, epoch)
-        #writer.add_scalar('Accuracy/test', test_acc, epoch)
-
-        # if epoch % 10 == 0:
-        #     logger.info('Epoch: %d Loss: %f' % (epoch, epoch_loss))
-        #     train_acc = compute_accuracy(net, train_dataloader, device=device)
-        #     test_acc, conf_matrix = compute_accuracy(net, test_dataloader, get_confusion_matrix=True, device=device)
-        #
-        #     logger.info('>> Training accuracy: %f' % train_acc)
-        #     logger.info('>> Test accuracy: %f' % test_acc)
         
     if data_sharing:
         train_acc = compute_accuracy(net[0], train_dataloader, device=device, adhoc=adhoc)
@@ -323,10 +338,8 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
     logger.info('>> Test accuracy: %f' % test_acc)
     
     if adhoc:
-        if data_sharing:
-            #net[0].to(device)
-            #net[1].to(device)
-            #net[2].to(device)
+        if data_sharing: #TODO: fix this...
+            
             pass
         else:
             net[0].to(device)
@@ -705,17 +718,24 @@ def local_train_net(nets, selected, args, net_dataidx_map, test_dl = None, devic
         if net_id == args.n_parties - 1:
             noise_level = 0
 
-        # CHANGE IF DATA SHARING
         if args.noise_type == 'space':
             train_dl_local, test_dl_local, _, _ = get_dataloader(args.dataset, args.datadir, args.batch_size, 32, dataidxs, noise_level, net_id, args.n_parties-1)
         else:
-            noise_level = args.noise / (args.n_parties - 1) * net_id
-            train_dl_local, test_dl_local, _, _ = get_dataloader(args.dataset, args.datadir, args.batch_size, 32, dataidxs, noise_level)
+            if data_sharing:
+                noise_level = args.noise / (args.n_parties - 1) * net_id
+                train_dl_local = []
+                for i in range(len(helpers[net_id])):
+                    dataidxs_ = net_dataidx_map[helpers[net_id][i]]
+                    train_dl_local_, test_dl_local, _, _ = get_dataloader(args.dataset, args.datadir, args.batch_size, 32, dataidxs_, noise_level)
+                    train_dl_local.append(train_dl_local_)
+            else:
+                noise_level = args.noise / (args.n_parties - 1) * net_id
+                train_dl_local, test_dl_local, _, _ = get_dataloader(args.dataset, args.datadir, args.batch_size, 32, dataidxs, noise_level)
         train_dl_global, test_dl_global, _, _ = get_dataloader(args.dataset, args.datadir, args.batch_size, 32)
         n_epoch = args.epochs
 
         if data_sharing:
-            trainacc, testacc = train_net(step, nets, train_dl_local, test_dl, n_epoch, args.lr, args.optimizer, device=device, adhoc=adhoc, data_sharing=True)
+            trainacc, testacc = train_net(net_id, nets, train_dl_local, test_dl, n_epoch, args.lr, args.optimizer, device=device, adhoc=adhoc, data_sharing=True, helpers=helpers[net_id])
         else:
             trainacc, testacc = train_net(net_id, net, train_dl_local, test_dl, n_epoch, args.lr, args.optimizer, device=device, adhoc=adhoc)
 
@@ -956,7 +976,7 @@ def find_helpers(dataset, net_dataidx_map, n_parties, traindata_cls_counts):
                 itr  = j
                 break
         threshold = -1
-        # naive policy for threshold
+        # option-1 policy for threshold
         if itr < int(n_parties/2):
             threshold = int(n_parties/2)
         else:
@@ -1092,14 +1112,12 @@ if __name__ == '__main__':
                     nets[idx][1].load_state_dict(global_para_b)
                     nets[idx][2].load_state_dict(global_para_c)
 
-            helpers = []
             if (round >= warmup and round % sl_step !=0):
                 data_sharing = True
-                helpers = []
             else:
                 data_sharing = False
             
-            local_train_net(nets, selected, args, net_dataidx_map, test_dl = test_dl_global, device=device, data_sharing=data_sharing, helpers=helpers)
+            local_train_net(nets, selected, args, net_dataidx_map, test_dl = test_dl_global, device=device, data_sharing=data_sharing, helpers=graph_comm)
 
             # update global model
             # Question: In case of data sharing we take these into account??
