@@ -192,10 +192,11 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
                 optimizer_b = optim.Adam(filter(lambda p: p.requires_grad, net[net_id][1].parameters()), lr=lr, weight_decay=args.reg)
                 optimizer_a =[]
                 optimizer_c = []
-
+                '''
                 for i in range(len(helpers)):
                     optimizer_a.append(optim.Adam(filter(lambda p: p.requires_grad, net[helpers[i]][0].parameters()), lr=lr, weight_decay=args.reg))
                     optimizer_c.append(optim.Adam(filter(lambda p: p.requires_grad, net[helpers[i]][2].parameters()), lr=lr, weight_decay=args.reg))
+                '''
             else:
                 optimizer_a = optim.Adam(filter(lambda p: p.requires_grad, net[0].parameters()), lr=lr, weight_decay=args.reg)
                 optimizer_b = optim.Adam(filter(lambda p: p.requires_grad, net[1].parameters()), lr=lr, weight_decay=args.reg)
@@ -210,12 +211,13 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
                                 amsgrad=True)
                 optimizer_a =[]
                 optimizer_c = []
-
+                '''
                 for i in range(len(helpers)):
                     optimizer_a.append(optim.Adam(filter(lambda p: p.requires_grad, net[helpers[i]][0].parameters()), lr=lr, weight_decay=args.reg,
                                 amsgrad=True))
                     optimizer_c.append(optim.Adam(filter(lambda p: p.requires_grad, net[helpers[i]][2].parameters()), lr=lr, weight_decay=args.reg,
                                 amsgrad=True))
+                '''
             else:
                 optimizer_a = optim.Adam(filter(lambda p: p.requires_grad, net[0].parameters()), lr=lr, weight_decay=args.reg,
                                 amsgrad=True)
@@ -230,13 +232,15 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
         if adhoc:
             if data_sharing:
                 logger.info('Data sharing round')
-                optimizer_b = optim.SGD(filter(lambda p: p.requires_grad, net[net_id].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
+                optimizer_b = optim.SGD(filter(lambda p: p.requires_grad, net[net_id][1].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
                 optimizer_a =[]
                 optimizer_c = []
 
+                '''
                 for i in range(len(helpers)):
-                    optimizer_a.append(optim.SGD(filter(lambda p: p.requires_grad, net[helpers[i]].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg))
-                    optimizer_c.append(optim.SGD(filter(lambda p: p.requires_grad, net[helpers[i]].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg))
+                    optimizer_a.append(optim.SGD(filter(lambda p: p.requires_grad, net[helpers[i]][0].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg))
+                    optimizer_c.append(optim.SGD(filter(lambda p: p.requires_grad, net[helpers[i]][2].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg))
+                '''
             else:
                 optimizer_a = optim.SGD(filter(lambda p: p.requires_grad, net[0].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
                 optimizer_b = optim.SGD(filter(lambda p: p.requires_grad, net[1].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
@@ -323,8 +327,8 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
         logger.info('Epoch: %d Loss: %f' % (epoch, epoch_loss))
         
     if data_sharing:
-        train_acc = compute_accuracy(net[0], train_dataloader, device=device, adhoc=adhoc)
-        test_acc, conf_matrix = compute_accuracy(net[0], test_dataloader, get_confusion_matrix=True, device=device, adhoc=adhoc)
+        train_acc = compute_accuracy(net[net_id], train_dataloader, device=device, adhoc=adhoc)
+        test_acc, conf_matrix = compute_accuracy(net[net_id], test_dataloader, get_confusion_matrix=True, device=device, adhoc=adhoc)
     else:
         train_acc = compute_accuracy(net, train_dataloader, device=device, adhoc=adhoc)
         test_acc, conf_matrix = compute_accuracy(net, test_dataloader, get_confusion_matrix=True, device=device, adhoc=adhoc)
@@ -956,12 +960,13 @@ def find_helpers(dataset, net_dataidx_map, n_parties, traindata_cls_counts):
     helpers = {}
     for i in range(n_parties):
         helpers.update({i:[]})
-    
+
     for k in range(K):
         times = [0 for i in range(n_parties)]
         for i in range(n_parties):
             distribution = traindata_cls_counts[i]
-            times[i] = distribution[k]
+            if k in distribution.keys():
+                times[i] = distribution[k]
         
         order = np.argsort(times)
         sorted_times = sorted(times)
@@ -1066,7 +1071,7 @@ if __name__ == '__main__':
     if args.alg == 'adhocSL':
         print("Running adhocSL algorithm.")
         
-        warmup = 10
+        warmup = 0
         sl_step = 2
 
         # initialize the communication graph for the sl-rounds
