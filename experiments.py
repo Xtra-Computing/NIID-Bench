@@ -1071,8 +1071,8 @@ if __name__ == '__main__':
     if args.alg == 'adhocSL':
         print("Running adhocSL algorithm.")
         
-        warmup = 0
-        sl_step = 2
+        warmup = 10
+        sl_step = 5
 
         # initialize the communication graph for the sl-rounds
         graph_comm = find_helpers(args.dataset, net_dataidx_map, args.n_parties, traindata_cls_counts)
@@ -1113,7 +1113,7 @@ if __name__ == '__main__':
                     nets[idx][1].load_state_dict(global_para_b)
                     nets[idx][2].load_state_dict(global_para_c)
 
-            if (round >= warmup and round % sl_step !=0):
+            if ((round >= warmup) and (round % sl_step ==0)):
                 data_sharing = True
             else:
                 data_sharing = False
