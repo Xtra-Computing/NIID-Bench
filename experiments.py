@@ -256,36 +256,99 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
         train_dataloader = [train_dataloader]
 
     #writer = SummaryWriter()
-    
+    num_helpers = len(helpers)
     for epoch in range(epochs):
         epoch_loss_collector = []
         i_helper = 0
-        for tmp in train_dataloader:
-            for batch_idx, (x, target) in enumerate(tmp):
-                x, target = x.to(device), target.to(device)
-                if adhoc:
+        if data_sharing:
+            for tmps in zip(*train_dataloader):
+                #print('new')  
+                batch_size = len(tmps[0][0])  # TODO: THIS NEEDS CHECK
+                portion = int(batch_size/num_helpers)
+                iterations = int(batch_size/portion)
+                #print("---------------- NEW --------------------")
+                #print(f'protion {portion} batch size {batch_size} {iterations} {num_helpers}')
+                # get the data samples
+                x_s = []
+                targets = []
+
+                for i_helper in range(num_helpers):
+                    x, target = tmps[0]
+                    #print(x.size())
+                    x, target = x.to(device), target.to(device)
+                    x.requires_grad = True
+                    target.requires_grad = False
+                    target = target.long()
+                    x_s.append(x)
+                    targets.append(target)
+
+                for it in range(iterations):
+                    #print(f'It is {it}')
                     optimizer_b.zero_grad()
-                    if not data_sharing:
-                        #for ii in range(len(helpers)):
-                        #    optimizer_a[ii].zero_grad()
-                        #    optimizer_c[ii].zero_grad()
+                    
+                    start_a = it*portion
+                    end_a = start_a + portion
+
+                    # forward to helpers model part a
+                    det_out_as = []
+                    for i_helper in range(num_helpers):
+                        out_a = net[i_helper][0](x_s[i_helper][start_a:end_a])
+                        det_out_a = out_a.clone().detach().requires_grad_(True)
+                        det_out_as.append(det_out_a)
+                    
+                    # concate activations and forward to model part b
+                    det_out_a_all = torch.cat(det_out_as)
+                    out_b = net[net_id][1](det_out_a_all)
+                    det_out_b = out_b.clone().detach().requires_grad_(True)
+
+                    # forward to helpers model part c
+                    grad_bs = []
+                    loss_ = 0
+
+                    
+                    for i_helper in range(num_helpers):
+                        start = i_helper*portion
+                        end = start + portion
+                        out = net[i_helper][2](det_out_b[start:end])
+                        #print(det_out_b.size())
+                        #print(f"ola: {out.size()}   {targets[i_helper][start_a:end_a].size()}")
+                        loss = criterion(out, targets[i_helper][start_a:end_a])
+                        loss.backward()
+                        loss_ += loss.item()
+                                                
+                        grad_b = det_out_b.grad.clone().detach()
+                        grad_bs.append(grad_b[start:end])
+                    
+                    # concate the gradients and backprop to model part b
+                    grad_b_all = torch.cat(grad_bs)
+                    out_b.backward(grad_b_all)
+                    optimizer_b.step()
+                     
+                    cnt += 1
+                    loss__ = loss_/num_helpers
+                    epoch_loss_collector.append(loss__)
+            
+            # end of epoch
+            epoch_loss = sum(epoch_loss_collector) / len(epoch_loss_collector)
+            logger.info('Epoch: %d Loss: %f' % (epoch, epoch_loss))
+            
+            train_acc = compute_accuracy(net[net_id], train_dataloader, device=device, adhoc=adhoc)
+            test_acc, conf_matrix = compute_accuracy(net[net_id], test_dataloader, get_confusion_matrix=True, device=device, adhoc=adhoc)
+        else:
+            for tmp in train_dataloader:
+                for batch_idx, (x, target) in enumerate(tmp):
+                    x, target = x.to(device), target.to(device)
+                    if adhoc:
+                        optimizer_b.zero_grad()
+                        
                         optimizer_a.zero_grad()
                         optimizer_c.zero_grad()
-                else:    
-                    optimizer.zero_grad()
-                x.requires_grad = True
-                target.requires_grad = False
-                target = target.long()
-                if adhoc:
-                        if data_sharing:
-                            out_a = net[i_helper][0](x)
-                            det_out_a = out_a.clone().detach().requires_grad_(True)
-
-                            out_b = net[net_id][1](det_out_a)
-                            det_out_b = out_b.clone().detach().requires_grad_(True)
-
-                            out = net[i_helper][2](det_out_b)
-                        else:
+                    else:    
+                        optimizer.zero_grad()
+                    x.requires_grad = True
+                    target.requires_grad = False
+                    target = target.long()
+                    if adhoc:
                             out_a = net[0](x)
                             det_out_a = out_a.clone().detach().requires_grad_(True)
 
@@ -293,19 +356,14 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
                             det_out_b = out_b.clone().detach().requires_grad_(True)
 
                             out = net[2](det_out_b)
-                else:
-                    out = net(x)
-                    
-                loss = criterion(out, target)
-
-                loss.backward()
-
-                if adhoc:
-                    if data_sharing:
-                        grad_b = det_out_b.grad.clone().detach()
-                        out_b.backward(grad_b)
-                        optimizer_b.step()
                     else:
+                        out = net(x)
+                        
+                    loss = criterion(out, target)
+
+                    loss.backward()
+
+                    if adhoc:
                         optimizer_c.step()
 
                         grad_b = det_out_b.grad.clone().detach()
@@ -316,23 +374,18 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
                         out_a.backward(grad_a)
 
                         optimizer_a.step()
-                else:
-                    optimizer.step()
+                    else:
+                        optimizer.step()
 
-                cnt += 1
-                epoch_loss_collector.append(loss.item())
-            i_helper += 1
-
-        epoch_loss = sum(epoch_loss_collector) / len(epoch_loss_collector)
-        logger.info('Epoch: %d Loss: %f' % (epoch, epoch_loss))
-        
-    if data_sharing:
-        train_acc = compute_accuracy(net[net_id], train_dataloader, device=device, adhoc=adhoc)
-        test_acc, conf_matrix = compute_accuracy(net[net_id], test_dataloader, get_confusion_matrix=True, device=device, adhoc=adhoc)
-    else:
-        train_acc = compute_accuracy(net, train_dataloader, device=device, adhoc=adhoc)
-        test_acc, conf_matrix = compute_accuracy(net, test_dataloader, get_confusion_matrix=True, device=device, adhoc=adhoc)
-
+                    cnt += 1
+                    epoch_loss_collector.append(loss.item())
+            
+            # end of epoch
+            epoch_loss = sum(epoch_loss_collector) / len(epoch_loss_collector)
+            logger.info('Epoch: %d Loss: %f' % (epoch, epoch_loss))
+            
+            train_acc = compute_accuracy(net, train_dataloader, device=device, adhoc=adhoc)
+            test_acc, conf_matrix = compute_accuracy(net, test_dataloader, get_confusion_matrix=True, device=device, adhoc=adhoc)  
 
     logger.info('>> Training accuracy: %f' % train_acc)
     logger.info('>> Test accuracy: %f' % test_acc)
@@ -1071,8 +1124,8 @@ if __name__ == '__main__':
     if args.alg == 'adhocSL':
         print("Running adhocSL algorithm.")
         
-        warmup = 10
-        sl_step = 5
+        warmup = 0
+        sl_step = 1
 
         # initialize the communication graph for the sl-rounds
         graph_comm = find_helpers(args.dataset, net_dataidx_map, args.n_parties, traindata_cls_counts)
