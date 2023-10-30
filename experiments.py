@@ -35,7 +35,7 @@ def get_args():
     parser.add_argument('--batch-size', type=int, default=64, help='input batch size for training (default: 64)')
     parser.add_argument('--lr', type=float, default=0.01, help='learning rate (default: 0.01)')
     parser.add_argument('--epochs', type=int, default=5, help='number of local epochs')
-    parser.add_argument('--n_parties', type=int, default=2,  help='number of workers in a distributed cluster')
+    parser.add_argument('--n_parties', type=int, default=2,  help='umber of workers in a distributed cluster')
     parser.add_argument('--alg', type=str, default='fedavg',
                             help='fl algorithms: fedavg/fedprox/scaffold/fednova/moon/adhocSL')
     parser.add_argument('--use_projection_head', type=bool, default=False, help='whether add an additional header to model or not (see MOON)')
@@ -126,6 +126,8 @@ def init_nets(net_configs, dropout_p, n_parties, args):
                     elif args.model == 'simple-cnn':
                         if args.dataset in ("mnist", 'femnist', 'fmnist'):
                             net = get_simpleCNNMINST_split(args.cut_a, args.cut_b, input_dim=(16 * 4 * 4), hidden_dims=[120, 84], output_dim=10)
+                        else:
+                            net = get_simpleCNN_split(args.cut_a, args.cut_b, input_dim=(16 * 5 * 5), hidden_dims=[120, 84], output_dim=10)
 
                 elif args.model == "vgg":
                     net = vgg11()
