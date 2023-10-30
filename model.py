@@ -339,7 +339,6 @@ class SimpleCNNMNIST(nn.Module):
                 # reached end
                 return x
         layer += 1    
-
         # layer 4
         x = self.fc3(x)
         return x
