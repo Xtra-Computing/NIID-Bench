@@ -204,7 +204,7 @@ class SimpleCNN_header(nn.Module):
         return x
 
 class SimpleCNN(nn.Module):
-    def __init__(self, input_dim, hidden_dims, output_dim=10):
+    def __init__(self, input_dim, hidden_dims, output_dim=10, first_cut=-1, last_cut=-1):
         super(SimpleCNN, self).__init__()
         self.conv1 = nn.Conv2d(3, 6, 5)
         self.pool = nn.MaxPool2d(2, 2)
@@ -216,15 +216,82 @@ class SimpleCNN(nn.Module):
         self.fc2 = nn.Linear(hidden_dims[0], hidden_dims[1])
         self.fc3 = nn.Linear(hidden_dims[1], output_dim)
 
-    def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 5 * 5)
+        self.first_cut = first_cut
+        self.last_cut = last_cut
 
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
+    def forward(self, x):
+        layer = 0
+        start = False
+        end = False
+
+        if self.last_cut == -1:
+            end = True
+
+        if self.first_cut == -1:
+            start = True
+
+        # layer 0
+        if start or ((not start) and (self.first_cut == layer)): #when to start
+            # have already started, or just started
+            if end or ((not end) and (self.last_cut > layer)):
+                # check we are not in end
+                x = self.pool(F.relu(self.conv1(x)))
+                start = True
+            else:
+                # reached end
+                return x
+        layer += 1
+
+        # layer 1
+        if start or (not start and (self.first_cut == layer)): #when to start
+            # have already started, or just started
+            if end or (not end and (self.last_cut > layer)):
+                # check we are not in end
+                x = self.pool(F.relu(self.conv2(x)))
+                x = x.view(-1, 16 * 5 * 5)
+                start = True
+            else:
+                # reached end
+                return x
+        layer += 1
+
+        # layer 2
+        if start or (not start and (self.first_cut == layer)): #when to start
+            # have already started, or just started
+            if end or (not end and (self.last_cut > layer)):
+                # check we are not in end
+                x = F.relu(self.fc1(x))
+                start = True
+            else:
+                # reached end
+                return x
+        layer += 1    
+
+        # layer 3
+        if start or (not start and (self.first_cut == layer)): #when to start
+            # have already started, or just started
+            if end or (not end and (self.last_cut > layer)):
+                # check we are not in end
+                x = F.relu(self.fc2(x))
+                start = True
+            else:
+                # reached end
+                return x
+        layer += 1
+        
+        # layer 4
         x = self.fc3(x)
         return x
+
+# ------ NEW: ADHOC configuration -----    
+def get_simpleCNN_split(first_cut, last_cut, input_dim, hidden_dims, output_dim=10):
+
+    model_part_a = SimpleCNN(input_dim, hidden_dims, output_dim, -1, first_cut)
+    model_part_b = SimpleCNN(input_dim, hidden_dims, output_dim, first_cut, last_cut)
+    model_part_c = SimpleCNN(input_dim, hidden_dims, output_dim, last_cut, -1)
+
+    return (model_part_a, model_part_b, model_part_c)
+
 
 
 # a simple perceptron model for generated 3D data
