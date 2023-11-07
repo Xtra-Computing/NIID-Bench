@@ -313,15 +313,18 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
                     for i_helper in range(num_helpers):
                         start = i_helper*portion
                         end = start + portion
-                        out = net[i_helper][2](det_out_b[start:end])
+                        #print(f'----------{i_helper}-----------')
                         #print(det_out_b.size())
-                        #print(f"ola: {out.size()}   {targets[i_helper][start_a:end_a].size()}")
+                        det_out_b_ = det_out_b[start:end].clone().detach().requires_grad_(True)
+                        #print(det_out_b_.size())
+                        out = net[i_helper][2](det_out_b_)
+                        
                         loss = criterion(out, targets[i_helper][start_a:end_a])
                         loss.backward()
                         loss_ += loss.item()
                                                 
-                        grad_b = det_out_b.grad.clone().detach()
-                        grad_bs.append(grad_b[start:end])
+                        grad_b = det_out_b_.grad.clone().detach()
+                        grad_bs.append(grad_b)
                     
                     # concate the gradients and backprop to model part b
                     grad_b_all = torch.cat(grad_bs)
