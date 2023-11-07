@@ -964,35 +964,46 @@ def find_helpers(dataset, net_dataidx_map, n_parties, traindata_cls_counts):
     helpers = {}
     for i in range(n_parties):
         helpers.update({i:[]})
-
     for k in range(K):
+        print(f'attribute {k}')
         times = [0 for i in range(n_parties)]
         for i in range(n_parties):
             distribution = traindata_cls_counts[i]
             if k in distribution.keys():
                 times[i] = distribution[k]
-        
-        order = np.argsort(times)
-        sorted_times = sorted(times)
-
+        print(times)
+        order_ = np.argsort(times) # increasing order
+        order = order_[::-1 ] # non-increasing order
+        sorted_times = sorted(times, reverse=True)
+        print(sorted_times)
         itr = -1
         for j in range(n_parties):
-            if sorted_times[j] != 0:
+            if sorted_times[j] == 0:
                 itr  = j
                 break
         threshold = -1
         # option-1 policy for threshold
-        if itr < int(n_parties/2):
-            threshold = int(n_parties/2)
-        else:
+        if sorted_times[itr] == 0:
             threshold = itr
-
-        for j in range(threshold):
+        else:
+            threshold = int(n_parties/2) # to do find something more smart
+        '''
+        if itr < int(n_parties/2):
+            threshold = itr
+        else:
+            threshold = int(n_parties/2)
+        '''
+        order_helpers = 0
+        for j in range(threshold, n_parties):
             need_help = order[j]
-            send_help = order[-j-1]        
+            send_help = order[order_helpers]
+            order_helpers = order_helpers + 1
+            if order_helpers >= threshold:
+                order_helpers = 0
+            
             if send_help not in helpers[need_help]:
                 helpers[need_help].append(send_help)
-        
+    print(helpers)
     return helpers
 
 # MAIN
