@@ -45,6 +45,8 @@ def get_args():
     parser.add_argument('--comm_round', type=int, default=50, help='number of maximum communication roun')
     parser.add_argument('--is_same_initial', type=int, default=1, help='Whether initial all the models with the same parameters in fedavg')
     parser.add_argument('--init_seed', type=int, default=0, help="Random seed")
+    parser.add_argument('--warmup', type=int, default=-1, help="warmup")
+    parser.add_argument('--sl_step', type=int, default=5, help="frequency")
     parser.add_argument('--dropout_p', type=float, required=False, default=0.0, help="Dropout probability. Default=0.0")
     parser.add_argument('--datadir', type=str, required=False, default="./data/", help="Data directory")
     parser.add_argument('--reg', type=float, default=1e-5, help="L2 regularization strength")
@@ -156,7 +158,7 @@ def init_nets(net_configs, dropout_p, n_parties, args):
         for (k, v) in nets[0][0].state_dict().items():
             model_meta_data.append(v.shape)
             layer_type.append(k)
-        
+
         for (k, v) in nets[0][1].state_dict().items():
             model_meta_data.append(v.shape)
             layer_type.append(k)
@@ -1124,8 +1126,9 @@ if __name__ == '__main__':
     if args.alg == 'adhocSL':
         print("Running adhocSL algorithm.")
         
-        warmup = 0
-        sl_step = 1
+        warmup = args.warmup
+        sl_step = args.sl_step
+    
 
         # initialize the communication graph for the sl-rounds
         graph_comm = find_helpers(args.dataset, net_dataidx_map, args.n_parties, traindata_cls_counts)
@@ -1166,7 +1169,9 @@ if __name__ == '__main__':
                     nets[idx][1].load_state_dict(global_para_b)
                     nets[idx][2].load_state_dict(global_para_c)
 
-            if ((round >= warmup) and (round % sl_step ==0)):
+            if warmup == -1:
+                data_sharing = False
+            elif ((round >= warmup) and (round % sl_step ==0)):
                 data_sharing = True
             else:
                 data_sharing = False

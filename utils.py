@@ -366,7 +366,7 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
 
     elif partition > "noniid-#label0" and partition <= "noniid-#label9": #label-distribution skew - quantity
         num = eval(partition[13:])
-        print(f'the num is {num}')
+        #print(f'the num is {num}')
         if dataset in ('celeba', 'covtype', 'a9a', 'rcv1', 'SUSY'):
             num = 1
             K = 2
@@ -402,7 +402,7 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
                             current.append(ind)
                             used.append(ind) 
                             times[ind]+=1
-                    print(current)
+                    #print(current)
                     contain.append(current)
             
             else:
@@ -416,7 +416,7 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, beta=0.4):
                             j=j+1
                             current.append(ind)
                             times[ind]+=1
-                    print(current)
+                    #print(current)
                     contain.append(current)
             '''
             budget = [num for i in range(K)]
