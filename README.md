@@ -1,4 +1,10 @@
 # NIID-Bench
+
+[![paper](https://img.shields.io/badge/PAPER-arXiv-yellowgreen?style=for-the-badge)](https://arxiv.org/pdf/2102.02079.pdf)
+&nbsp;&nbsp;&nbsp;
+[![paper](https://img.shields.io/badge/leaderboard-35%2B%20Methods-228c22?style=for-the-badge)](https://niidbench.xtra.science/)
+&nbsp;&nbsp;&nbsp;
+
 This is the code of paper [Federated Learning on Non-IID Data Silos: An Experimental Study](https://arxiv.org/pdf/2102.02079.pdf).
 
 
