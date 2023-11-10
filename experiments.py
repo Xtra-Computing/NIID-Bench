@@ -266,7 +266,7 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
         i_helper = 0
         if data_sharing:
             for tmps in zip(*train_dataloader):
-                batch_size = len(tmps[0][0])  # TODO: THIS NEEDS CHECK
+                batch_size = 64  # TODO: THIS NEEDS CHECK
                 portion = int(batch_size/num_helpers)
                 iterations = int(batch_size/portion)
                 #print("---------------- NEW --------------------")
@@ -294,7 +294,10 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
                     # forward to helpers model part a
                     det_out_as = []
                     for i_helper in range(num_helpers):
-                        out_a = net[i_helper][0](x_s[i_helper][start_a:end_a])
+                        end_a_ = end_a
+                        if len(targets[i_helper]) <  end_a:
+                            end_a_ = len(x_s[i_helper])
+                        out_a = net[i_helper][0](x_s[i_helper][start_a:end_a_])
                         det_out_a = out_a.clone().detach().requires_grad_(True)
                         det_out_as.append(det_out_a)
                     
@@ -314,7 +317,10 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
                         start = start + portion_#i_helper*portion
                         end = start + portion
                         if len(targets[i_helper]) <  end_a:
-                            end = start + len(targets[i_helper]) - start_a
+                            if  len(targets[i_helper]) - start_a > 0:
+                                end = start + len(targets[i_helper]) - start_a
+                            else:
+                                end = start
                             #print(f'~~~~~~~~ {end}')
                         portion_ = end - start
                         
@@ -329,7 +335,7 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
                             end_a_ = len(targets[i_helper])
                             #print(f'~~~~~~~~!!! {end_a_}')
                         #print(f'@@ {targets[i_helper][start_a:end_a_].size()}')
-                        if targets[i_helper][start_a:end_a_].size()[0] == 0:
+                        if targets[i_helper][start_a:end_a_].size()[0] == 0 or out.size()[0] == 0:
                             continue
                         loss = criterion(out, targets[i_helper][start_a:end_a_])
                         loss.backward()
