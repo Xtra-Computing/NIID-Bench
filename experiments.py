@@ -178,7 +178,7 @@ def init_nets(net_configs, dropout_p, n_parties, args):
 
 def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_optimizer, device="cpu", adhoc=False, data_sharing=False, helpers=[]):
     logger.info('Training network %s' % str(net_id))
-    
+    #print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     if data_sharing:
         train_acc = compute_accuracy(net[net_id], train_dataloader, device=device, adhoc=adhoc)
         test_acc, conf_matrix = compute_accuracy(net[net_id], test_dataloader, get_confusion_matrix=True, device=device, adhoc=adhoc)
@@ -266,8 +266,11 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
         i_helper = 0
         if data_sharing:
             for tmps in zip(*train_dataloader):
-                batch_size = 64  # TODO: THIS NEEDS CHECK
+                batch_size = max([tmps[i][0].size()[0] for i in range(num_helpers)])  # TODO: THIS NEEDS CHECK
+                #print(f'BATCHHHHH:::::::::::::: {batch_size} {num_helpers}')
                 portion = int(batch_size/num_helpers)
+                if portion == 0:
+                    portion = 1
                 iterations = int(batch_size/portion)
                 #print("---------------- NEW --------------------")
                 #print(f'protion {portion} batch size {batch_size} {iterations} {num_helpers}')
@@ -277,7 +280,7 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
 
                 for i_helper in range(num_helpers):
                     x, target = tmps[i_helper]
-                    #print(x.size())
+                    #print(f'{i_helper} size {x.size()}')
                     x, target = x.to(device), target.to(device)
                     x.requires_grad = True
                     target.requires_grad = False
