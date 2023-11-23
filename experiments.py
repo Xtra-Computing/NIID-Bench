@@ -178,10 +178,12 @@ def init_nets(net_configs, dropout_p, n_parties, args):
 
 def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_optimizer, device="cpu", adhoc=False, data_sharing=False, helpers=[]):
     logger.info('Training network %s' % str(net_id))
-    #print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     if data_sharing:
         train_acc = compute_accuracy(net[net_id], train_dataloader, device=device, adhoc=adhoc)
         test_acc, conf_matrix = compute_accuracy(net[net_id], test_dataloader, get_confusion_matrix=True, device=device, adhoc=adhoc)
+
+        tempModels, _, _ = init_nets(args.net_config, 0, 1, args)
+        tempModel = tempModels[0]
     else:
         train_acc = compute_accuracy(net, train_dataloader, device=device, adhoc=adhoc)
         test_acc, conf_matrix = compute_accuracy(net, test_dataloader, get_confusion_matrix=True, device=device, adhoc=adhoc)
@@ -267,27 +269,22 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
         if data_sharing:
             for tmps in zip(*train_dataloader):
                 batch_size = max([tmps[i][0].size()[0] for i in range(num_helpers)])  # TODO: THIS NEEDS CHECK
-                #print(f'BATCHHHHH:::::::::::::: {batch_size} {num_helpers}')
                 portion = int(batch_size/num_helpers)
                 if portion == 0:
                     portion = 1
                 iterations = int(batch_size/portion)
-                #print("---------------- NEW --------------------")
-                #print(f'protion {portion} batch size {batch_size} {iterations} {num_helpers}')
                 # get the data samples
                 x_s = []
                 targets = []
 
                 for i_helper in range(num_helpers):
                     x, target = tmps[i_helper]
-                    #print(f'{i_helper} size {x.size()}')
                     x, target = x.to(device), target.to(device)
                     x.requires_grad = True
                     target.requires_grad = False
                     target = target.long()
                     x_s.append(x)
                     targets.append(target)
-                #print(targets)
                 for it in range(iterations):
                     #print(f'It is {it}')
                     optimizer_b.zero_grad()
@@ -297,10 +294,12 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
                     # forward to helpers model part a
                     det_out_as = []
                     for i_helper in range(num_helpers):
+                        net_params =  net[i_helper][0].state_dict()
+                        tempModel[0].load_state_dict(net_params)
                         end_a_ = end_a
                         if len(targets[i_helper]) <  end_a:
                             end_a_ = len(x_s[i_helper])
-                        out_a = net[i_helper][0](x_s[i_helper][start_a:end_a_])
+                        out_a = tempModel[0](x_s[i_helper][start_a:end_a_])
                         det_out_a = out_a.clone().detach().requires_grad_(True)
                         det_out_as.append(det_out_a)
                     
@@ -313,10 +312,11 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
                     grad_bs = []
                     loss_ = 0
 
-                    #print(f'---------------------')
                     start = 0
                     portion_ = 0
                     for i_helper in range(num_helpers):
+                        net_params =  net[i_helper][2].state_dict()
+                        tempModel[2].load_state_dict(net_params)
                         start = start + portion_#i_helper*portion
                         end = start + portion
                         if len(targets[i_helper]) <  end_a:
@@ -324,27 +324,20 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
                                 end = start + len(targets[i_helper]) - start_a
                             else:
                                 end = start
-                            #print(f'~~~~~~~~ {end}')
                         portion_ = end - start
                         
-                        #print(f'{i_helper}  {start_a}>>{end_a} {start}--{end}')
                         det_out_b_ = det_out_b[start:end].clone().detach().requires_grad_(True)
-                        #print(f'>>> {det_out_b_.size()}')
-                        out = net[i_helper][2](det_out_b_)
-                        #print(f'<<<< {out.size()}')
+                        out = tempModel[2](det_out_b_)
                         
                         end_a_ = end_a
                         if len(targets[i_helper]) <  end_a:
                             end_a_ = len(targets[i_helper])
-                            #print(f'~~~~~~~~!!! {end_a_}')
-                        #print(f'@@ {targets[i_helper][start_a:end_a_].size()}')
                         if targets[i_helper][start_a:end_a_].size()[0] == 0 or out.size()[0] == 0:
                             continue
                         loss = criterion(out, targets[i_helper][start_a:end_a_])
                         loss.backward()
                         
-                        loss_ += loss.item()
-                        #print(loss.item())                       
+                        loss_ += loss.item()                    
                         grad_b = det_out_b_.grad.clone().detach()
                         grad_bs.append(grad_b)
                     
@@ -1041,7 +1034,7 @@ def find_helpers(dataset, net_dataidx_map, n_parties, traindata_cls_counts):
 
     helpers = {}
     for i in range(n_parties):
-        helpers.update({i:[]})
+        helpers.update({i:[i]})
     for k in range(K):
         print(f'attribute {k}')
         times = [0 for i in range(n_parties)]
