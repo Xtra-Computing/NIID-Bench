@@ -1,4 +1,10 @@
 # NIID-Bench
+
+[![paper](https://img.shields.io/badge/PAPER-arXiv-yellowgreen?style=for-the-badge)](https://arxiv.org/pdf/2102.02079.pdf)
+&nbsp;&nbsp;&nbsp;
+[![paper](https://img.shields.io/badge/leaderboard-5%2B%20Methods-228c22?style=for-the-badge)](https://niidbench.xtra.science/)
+&nbsp;&nbsp;&nbsp;
+
 This is the code of paper [Federated Learning on Non-IID Data Silos: An Experimental Study](https://arxiv.org/pdf/2102.02079.pdf).
 
 
@@ -6,7 +12,7 @@ This code runs a benchmark for federated learning algorithms under non-IID data 
 
 
 ## Updates on NIID-Bench
-We build a [leaderboard](https://niidbench.xtra.science) to enable researchers to test their own FL algorithms in our non-IID data partitioning framework. Welcome to submit your code and results in our [website](https://niidbench.xtra.science)!
+We publish NIID-Bench challenge https://niidbench.xtra.science, a benchmark to compare federated learning algorithms on comprehensive non-IID data settings. Researchers are welcome to test their algorithms on these settings, upload their codes and participate in our leaderboard!
 
 Implement `partition.py` to divide tabular datasets (csv format) into multiple files using our non-IID partitioning strategies. Column `Class` in the header is recognized as label. See an running example in `partition_to_file.sh`. The example dataset is [Credit Card Fraud Detection](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud).
 
