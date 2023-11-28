@@ -709,7 +709,10 @@ def train_net_fednova(net_id, net, global_model, train_dataloader, test_dataload
     logger.info('>> Pre-Training Training accuracy: {}'.format(train_acc))
     logger.info('>> Pre-Training Test accuracy: {}'.format(test_acc))
 
-    optimizer = optim.SGD(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
+    #optimizer = optim.SGD(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
+    optimizer_a = optim.SGD(filter(lambda p: p.requires_grad, net[0].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
+    optimizer_b = optim.SGD(filter(lambda p: p.requires_grad, net[1].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
+    optimizer_c = optim.SGD(filter(lambda p: p.requires_grad, net[2].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
     criterion = nn.CrossEntropyLoss().to(device)
 
     if type(train_dataloader) == type([1]):
@@ -728,16 +731,42 @@ def train_net_fednova(net_id, net, global_model, train_dataloader, test_dataload
             for batch_idx, (x, target) in enumerate(tmp):
                 x, target = x.to(device), target.to(device)
 
-                optimizer.zero_grad()
+                # FOR REPRODUCABILITY
+                #optimizer.zero_grad()
+
+                optimizer_b.zero_grad()
+                optimizer_a.zero_grad()
+                optimizer_c.zero_grad()
+                
                 x.requires_grad = True
                 target.requires_grad = False
                 target = target.long()
 
-                out = net(x)
+                # FOR REPRODUCABILITY
+                #out = net(x)
+                out_a = net[0](x)
+                det_out_a = out_a.clone().detach().requires_grad_(True)
+
+                out_b = net[1](det_out_a)
+                det_out_b = out_b.clone().detach().requires_grad_(True)
+
+                out = net[2](det_out_b)
                 loss = criterion(out, target)
 
                 loss.backward()
-                optimizer.step()
+                # FOR REPRODUCABILITY
+                #optimizer.step()
+                optimizer_c.step()
+
+                grad_b = det_out_b.grad.clone().detach()
+                out_b.backward(grad_b)
+                optimizer_b.step()
+
+                grad_a = det_out_a.grad.clone().detach()
+                out_a.backward(grad_a)
+
+                optimizer_a.step()
+
 
                 tau = tau + 1
 
@@ -747,22 +776,44 @@ def train_net_fednova(net_id, net, global_model, train_dataloader, test_dataload
         epoch_loss = sum(epoch_loss_collector) / len(epoch_loss_collector)
         logger.info('Epoch: %d Loss: %f' % (epoch, epoch_loss))
 
-    global_model.to(device)
+    #global_model.to(device)
+    global_model[0].to(device)
+    global_model[1].to(device)
+    global_model[2].to(device)
     a_i = (tau - args.rho * (1 - pow(args.rho, tau)) / (1 - args.rho)) / (1 - args.rho)
-    global_model.to(device)
-    global_model_para = global_model.state_dict()
-    net_para = net.state_dict()
-    norm_grad = copy.deepcopy(global_model.state_dict())
-    for key in norm_grad:
-        #norm_grad[key] = (global_model_para[key] - net_para[key]) / a_i
-        norm_grad[key] = torch.true_divide(global_model_para[key]-net_para[key], a_i)
+    #global_model.to(device)
+    global_model[0].to(device)
+    global_model[1].to(device)
+    global_model[2].to(device)
+
+    #global_model_para = global_model.state_dict()
+    global_model_para_a = global_model[0].state_dict()
+    global_model_para_b = global_model[1].state_dict()
+    global_model_para_c = global_model[2].state_dict()
+
+    #net_para = net.state_dict()
+    net_para_a = net[0].state_dict()
+    net_para_b = net[1].state_dict()
+    net_para_c = net[2].state_dict()
+
+    norm_grad = (copy.deepcopy(global_model[0].state_dict()), copy.deepcopy(global_model[1].state_dict()), copy.deepcopy(global_model[2].state_dict()))
+    
+    for key in norm_grad[0]:
+        norm_grad[0][key] = torch.true_divide(global_model_para_a[key]-net_para_a[key], a_i)
+    for key in norm_grad[1]:
+        norm_grad[1][key] = torch.true_divide(global_model_para_b[key]-net_para_b[key], a_i)
+    for key in norm_grad[2]:
+        norm_grad[2][key] = torch.true_divide(global_model_para_c[key]-net_para_c[key], a_i)
+    
     train_acc = compute_accuracy(net, train_dataloader, device=device)
     test_acc, conf_matrix = compute_accuracy(net, test_dataloader, get_confusion_matrix=True, device=device)
 
     logger.info('>> Training accuracy: %f' % train_acc)
     logger.info('>> Test accuracy: %f' % test_acc)
 
-    net.to('cpu')
+    net[0].to('cpu')
+    net[1].to('cpu')
+    net[2].to('cpu')
     logger.info(' ** Training complete **')
     return train_acc, test_acc, a_i, norm_grad
 
@@ -1054,9 +1105,13 @@ def local_train_net_fednova(nets, selected, global_model, args, net_dataidx_map,
     avg_acc = 0.0
 
     a_list = []
-    d_list = []
+    d_list = ([], [], [])
     n_list = []
-    global_model.to(device)
+    #global_model.to(device)
+    global_model[0].to(device)
+    global_model[1].to(device)
+    global_model[2].to(device)
+    
     for net_id, net in nets.items():
         if net_id not in selected:
             continue
@@ -1064,7 +1119,10 @@ def local_train_net_fednova(nets, selected, global_model, args, net_dataidx_map,
 
         logger.info("Training network %s. n_training: %d" % (str(net_id), len(dataidxs)))
         # move the model to cuda device:
-        net.to(device)
+        #net.to(device)
+        net[0].to(device)
+        net[1].to(device)
+        net[2].to(device)
 
         noise_level = args.noise
         if net_id == args.n_parties - 1:
@@ -1082,7 +1140,9 @@ def local_train_net_fednova(nets, selected, global_model, args, net_dataidx_map,
         trainacc, testacc, a_i, d_i = train_net_fednova(net_id, net, global_model, train_dl_local, test_dl, n_epoch, args.lr, args.optimizer, device=device)
 
         a_list.append(a_i)
-        d_list.append(d_i)
+        d_list[0].append(d_i[0])
+        d_list[1].append(d_i[1])
+        d_list[2].append(d_i[2])
         n_i = len(train_dl_local.dataset)
         n_list.append(n_i)
         logger.info("net %d final test acc %f" % (net_id, testacc))
@@ -1434,11 +1494,9 @@ if __name__ == '__main__':
 
     elif args.alg == 'fedprox':
         logger.info("Initializing nets")
-        print("Initializing nets")
         nets, local_model_meta_data, layer_type = init_nets(args.net_config, args.dropout_p, args.n_parties, args)
         global_models, global_model_meta_data, global_layer_type = init_nets(args.net_config, 0, 1, args)
         global_model = global_models[0]
-        print('cool')
         '''
         global_para = global_model.state_dict()
 
@@ -1610,13 +1668,29 @@ if __name__ == '__main__':
         global_models, global_model_meta_data, global_layer_type = init_nets(args.net_config, 0, 1, args)
         global_model = global_models[0]
 
-        d_list = [copy.deepcopy(global_model.state_dict()) for i in range(args.n_parties)]
-        d_total_round = copy.deepcopy(global_model.state_dict())
+        d_list = ([copy.deepcopy(global_model[0].state_dict()) for i in range(args.n_parties)],
+                  [copy.deepcopy(global_model[1].state_dict()) for i in range(args.n_parties)],
+                  [copy.deepcopy(global_model[2].state_dict()) for i in range(args.n_parties)] 
+                  )
+        d_total_round = (copy.deepcopy(global_model[0].state_dict()),
+                         copy.deepcopy(global_model[1].state_dict()),
+                         copy.deepcopy(global_model[2].state_dict()) 
+                        )
+        
         for i in range(args.n_parties):
-            for key in d_list[i]:
-                d_list[i][key] = 0
-        for key in d_total_round:
-            d_total_round[key] = 0
+            for key in d_list[0][i]:
+                d_list[0][i][key] = 0
+            for key in d_list[1][i]:
+                d_list[1][i][key] = 0
+            for key in d_list[2][i]:
+                d_list[2][i][key] = 0
+        
+        for key in d_total_round[0]:
+            d_total_round[0][key] = 0
+        for key in d_total_round[1]:
+            d_total_round[1][key] = 0
+        for key in d_total_round[2]:
+            d_total_round[2][key] = 0
 
         data_sum = 0
         for i in range(args.n_parties):
@@ -1625,10 +1699,21 @@ if __name__ == '__main__':
         for i in range(args.n_parties):
             portion.append(len(traindata_cls_counts[i]) / data_sum)
 
+        '''
         global_para = global_model.state_dict()
+
         if args.is_same_initial:
             for net_id, net in nets.items():
                 net.load_state_dict(global_para)
+        '''
+        global_para_a = global_model[0].state_dict()
+        global_para_b = global_model[1].state_dict()
+        global_para_c = global_model[2].state_dict()
+        if args.is_same_initial:
+            for net_id, net in nets.items():
+                net[0].load_state_dict(global_para_a)
+                net[1].load_state_dict(global_para_b)
+                net[2].load_state_dict(global_para_c)
 
         for round in range(args.comm_round):
             logger.info("in comm round:" + str(round))
@@ -1637,7 +1722,12 @@ if __name__ == '__main__':
             np.random.shuffle(arr)
             selected = arr[:int(args.n_parties * args.sample)]
 
-            global_para = global_model.state_dict()
+            #global_para = global_model.state_dict()
+            global_para_a = global_model[0].state_dict()
+            global_para_b = global_model[1].state_dict()
+            global_para_c = global_model[2].state_dict()
+
+            '''
             if round == 0:
                 if args.is_same_initial:
                     for idx in selected:
@@ -1645,51 +1735,71 @@ if __name__ == '__main__':
             else:
                 for idx in selected:
                     nets[idx].load_state_dict(global_para)
+            '''
+            if round == 0:
+                if args.is_same_initial:
+                    for idx in selected:
+                        nets[idx][0].load_state_dict(global_para_a)
+                        nets[idx][1].load_state_dict(global_para_b)
+                        nets[idx][2].load_state_dict(global_para_c)
+            else:
+                for idx in selected:
+                    nets[idx][0].load_state_dict(global_para_a)
+                    nets[idx][1].load_state_dict(global_para_b)
+                    nets[idx][2].load_state_dict(global_para_c)
 
             _, a_list, d_list, n_list = local_train_net_fednova(nets, selected, global_model, args, net_dataidx_map, test_dl = test_dl_global, device=device)
             total_n = sum(n_list)
-            #print("total_n:", total_n)
-            d_total_round = copy.deepcopy(global_model.state_dict())
-            for key in d_total_round:
-                d_total_round[key] = 0.0
+            # AGGREGATION
+            d_total_round = (copy.deepcopy(global_model[0].state_dict()), 
+                             copy.deepcopy(global_model[1].state_dict()), 
+                             copy.deepcopy(global_model[2].state_dict())
+                            )
+            
+            for key in d_total_round[0]:
+                d_total_round[0][key] = 0.0
+            for key in d_total_round[1]:
+                d_total_round[1][key] = 0.0
+            for key in d_total_round[2]:
+                d_total_round[2][key] = 0.0
 
             for i in range(len(selected)):
-                d_para = d_list[i]
-                for key in d_para:
-                    #if d_total_round[key].type == 'torch.LongTensor':
-                    #    d_total_round[key] += (d_para[key] * n_list[i] / total_n).type(torch.LongTensor)
-                    #else:
-                    d_total_round[key] += d_para[key] * n_list[i] / total_n
+                for j in range(3):
+                    d_para = d_list[j][i]
+                    for key in d_para:
+                        d_total_round[j][key] += d_para[key] * n_list[i] / total_n
 
 
-            # for i in range(len(selected)):
-            #     d_total_round = d_total_round + d_list[i] * n_list[i] / total_n
-
-            # local_train_net(nets, args, net_dataidx_map, local_split=False, device=device)
-
-            # update global model
             coeff = 0.0
             for i in range(len(selected)):
                 coeff = coeff + a_list[i] * n_list[i]/total_n
 
-            updated_model = global_model.state_dict()
-            for key in updated_model:
-                #print(updated_model[key])
-                if updated_model[key].type() == 'torch.LongTensor':
-                    updated_model[key] -= (coeff * d_total_round[key]).type(torch.LongTensor)
-                elif updated_model[key].type() == 'torch.cuda.LongTensor':
-                    updated_model[key] -= (coeff * d_total_round[key]).type(torch.cuda.LongTensor)
-                else:
-                    #print(updated_model[key].type())
-                    #print((coeff*d_total_round[key].type()))
-                    updated_model[key] -= coeff * d_total_round[key]
-            global_model.load_state_dict(updated_model)
+            updated_model = (global_model[0].state_dict(),
+                             global_model[1].state_dict(),
+                             global_model[2].state_dict()
+                            )
+            for j in range(3):
+                for key in updated_model[j]:
+                    #print(updated_model[key])
+                    if updated_model[j][key].type() == 'torch.LongTensor':
+                        updated_model[j][key] -= (coeff * d_total_round[j][key]).type(torch.LongTensor)
+                    elif updated_model[j][key].type() == 'torch.cuda.LongTensor':
+                        updated_model[j][key] -= (coeff * d_total_round[j][key]).type(torch.cuda.LongTensor)
+                    else:
+                        #print(updated_model[key].type())
+                        #print((coeff*d_total_round[key].type()))
+                        updated_model[j][key] -= coeff * d_total_round[j][key]
+                global_model[j].load_state_dict(updated_model[j])
 
 
             logger.info('global n_training: %d' % len(train_dl_global))
             logger.info('global n_test: %d' % len(test_dl_global))
 
-            global_model.to(device)
+            #global_model.to(device)
+            global_model[0].to('cpu')
+            global_model[1].to('cpu')
+            global_model[2].to('cpu')
+
             train_acc = compute_accuracy(global_model, train_dl_global, device=device)
             test_acc, conf_matrix = compute_accuracy(global_model, test_dl_global, get_confusion_matrix=True, device=device)
 
