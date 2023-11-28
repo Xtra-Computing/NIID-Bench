@@ -644,8 +644,11 @@ def compute_accuracy(model, dataloader, get_confusion_matrix=False, moon_model=F
             model[2].eval()
             was_training = True
     else:
-        if model.training:
-            model.eval()
+        if model[0].training:
+            #model.eval()
+            model[0].eval()
+            model[1].eval()
+            model[2].eval()
             was_training = True
 
     true_labels_list, pred_labels_list = np.array([]), np.array([])
@@ -673,7 +676,14 @@ def compute_accuracy(model, dataloader, get_confusion_matrix=False, moon_model=F
                         out = model[2](det_out_b)
 
                     else:
-                        out = model(x)
+                        #out = model(x)
+                        out_a = model[0](x)
+                        det_out_a = out_a.clone().detach().requires_grad_(True)
+
+                        out_b = model[1](det_out_a)
+                        det_out_b = out_b.clone().detach().requires_grad_(True)
+
+                        out = model[2](det_out_b)
                 _, pred_label = torch.max(out.data, 1)
 
                 total += x.data.size()[0]

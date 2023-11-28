@@ -133,9 +133,13 @@ def init_nets(net_configs, dropout_p, n_parties, args):
                     net = vgg11()
                 elif args.model == "simple-cnn":
                     if args.dataset in ("cifar10", "cinic10", "svhn"):
-                        net = SimpleCNN(input_dim=(16 * 5 * 5), hidden_dims=[120, 84], output_dim=10)
+                        # FOR REPRODUCABILITY
+                        #net = SimpleCNN(input_dim=(16 * 5 * 5), hidden_dims=[120, 84], output_dim=10)
+                        net = get_simpleCNN_split(args.cut_a, args.cut_b, input_dim=(16 * 5 * 5), hidden_dims=[120, 84], output_dim=10)
                     elif args.dataset in ("mnist", 'femnist', 'fmnist'):
-                        net = SimpleCNNMNIST(input_dim=(16 * 4 * 4), hidden_dims=[120, 84], output_dim=10)
+                        # FOR REPRODUCABILITY
+                        #net = SimpleCNNMNIST(input_dim=(16 * 4 * 4), hidden_dims=[120, 84], output_dim=10)
+                        net = get_simpleCNNMINST_split(args.cut_a, args.cut_b, input_dim=(16 * 4 * 4), hidden_dims=[120, 84], output_dim=10)
                     elif args.dataset == 'celeba':
                         net = SimpleCNN(input_dim=(16 * 5 * 5), hidden_dims=[120, 84], output_dim=2)
                 elif args.model == "vgg-9":
@@ -147,7 +151,8 @@ def init_nets(net_configs, dropout_p, n_parties, args):
                     elif args.dataset == 'celeba':
                         net = ModerateCNN(output_dim=2)
                 elif args.model == "resnet":
-                    net = ResNet50_cifar10()
+                    #net = ResNet50_cifar10()
+                    net = resnet_split_model.get_resnet_split(n_classes, args.cut_a, args.cut_b, args.model_type)
                 elif args.model == "vgg16":
                     net = vgg16()
                 else:
@@ -156,6 +161,20 @@ def init_nets(net_configs, dropout_p, n_parties, args):
                 nets[net_i] = net
     model_meta_data = []
     layer_type = []
+    
+    ###### FOR REPRODUCABILITY
+    for (k, v) in nets[0][0].state_dict().items():
+            model_meta_data.append(v.shape)
+            layer_type.append(k)
+
+    for (k, v) in nets[0][1].state_dict().items():
+        model_meta_data.append(v.shape)
+        layer_type.append(k)
+
+    for (k, v) in nets[0][2].state_dict().items():
+        model_meta_data.append(v.shape)
+        layer_type.append(k)
+    '''
     if args.alg == 'adhocSL':
         for (k, v) in nets[0][0].state_dict().items():
             model_meta_data.append(v.shape)
@@ -173,6 +192,8 @@ def init_nets(net_configs, dropout_p, n_parties, args):
         for (k, v) in nets[0].state_dict().items():
             model_meta_data.append(v.shape)
             layer_type.append(k)
+    '''
+    ###### FOR REPRODUCABILITY END
     return nets, model_meta_data, layer_type
 
 
@@ -208,7 +229,11 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
                 optimizer_b = optim.Adam(filter(lambda p: p.requires_grad, net[1].parameters()), lr=lr, weight_decay=args.reg)
                 optimizer_c = optim.Adam(filter(lambda p: p.requires_grad, net[2].parameters()), lr=lr, weight_decay=args.reg)
         else:
-            optimizer = optim.Adam(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, weight_decay=args.reg)
+            # FOR REPRODUCABILITY
+            #optimizer = optim.Adam(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, weight_decay=args.reg)
+            optimizer_a = optim.Adam(filter(lambda p: p.requires_grad, net[0].parameters()), lr=lr, weight_decay=args.reg)
+            optimizer_b = optim.Adam(filter(lambda p: p.requires_grad, net[1].parameters()), lr=lr, weight_decay=args.reg)
+            optimizer_c = optim.Adam(filter(lambda p: p.requires_grad, net[2].parameters()), lr=lr, weight_decay=args.reg)
     elif args_optimizer == 'amsgrad':
         if adhoc:
             if data_sharing:
@@ -232,8 +257,15 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
                 optimizer_c = optim.Adam(filter(lambda p: p.requires_grad, net[2].parameters()), lr=lr, weight_decay=args.reg,
                                 amsgrad=True)
         else:
-            optimizer = optim.Adam(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, weight_decay=args.reg,
-                               amsgrad=True)
+            # FOR REPRODUCABILITY
+            #optimizer = optim.Adam(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, weight_decay=args.reg,
+            #                   amsgrad=True)
+            optimizer_a = optim.Adam(filter(lambda p: p.requires_grad, net[0].parameters()), lr=lr, weight_decay=args.reg,
+                                amsgrad=True)
+            optimizer_b = optim.Adam(filter(lambda p: p.requires_grad, net[1].parameters()), lr=lr, weight_decay=args.reg,
+                                amsgrad=True)
+            optimizer_c = optim.Adam(filter(lambda p: p.requires_grad, net[2].parameters()), lr=lr, weight_decay=args.reg,
+                                amsgrad=True)
     elif args_optimizer == 'sgd':
         if adhoc:
             if data_sharing:
@@ -252,7 +284,11 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
                 optimizer_b = optim.SGD(filter(lambda p: p.requires_grad, net[1].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
                 optimizer_c = optim.SGD(filter(lambda p: p.requires_grad, net[2].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
         else:
-            optimizer = optim.SGD(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
+            # FOR REPRODUCABILITY
+            #optimizer = optim.SGD(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
+            optimizer_a = optim.SGD(filter(lambda p: p.requires_grad, net[0].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
+            optimizer_b = optim.SGD(filter(lambda p: p.requires_grad, net[1].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
+            optimizer_c = optim.SGD(filter(lambda p: p.requires_grad, net[2].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
     criterion = nn.CrossEntropyLoss().to(device)
 
     cnt = 0
@@ -362,11 +398,15 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
                     x, target = x.to(device), target.to(device)
                     if adhoc:
                         optimizer_b.zero_grad()
-                        
                         optimizer_a.zero_grad()
                         optimizer_c.zero_grad()
-                    else:    
-                        optimizer.zero_grad()
+                    else:
+                        # FOR REPRODUCABILITY
+                        #optimizer.zero_grad()
+
+                        optimizer_b.zero_grad()
+                        optimizer_a.zero_grad()
+                        optimizer_c.zero_grad()
                     x.requires_grad = True
                     target.requires_grad = False
                     target = target.long()
@@ -379,7 +419,15 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
 
                             out = net[2](det_out_b)
                     else:
-                        out = net(x)
+                        # FOR REPRODUCABILITY
+                        #out = net(x)
+                        out_a = net[0](x)
+                        det_out_a = out_a.clone().detach().requires_grad_(True)
+
+                        out_b = net[1](det_out_a)
+                        det_out_b = out_b.clone().detach().requires_grad_(True)
+
+                        out = net[2](det_out_b)
                         
                     loss = criterion(out, target)
 
@@ -397,7 +445,18 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
 
                         optimizer_a.step()
                     else:
-                        optimizer.step()
+                        # FOR REPRODUCABILITY
+                        #optimizer.step()
+                        optimizer_c.step()
+
+                        grad_b = det_out_b.grad.clone().detach()
+                        out_b.backward(grad_b)
+                        optimizer_b.step()
+
+                        grad_a = det_out_a.grad.clone().detach()
+                        out_a.backward(grad_a)
+
+                        optimizer_a.step()
 
                     cnt += 1
                     epoch_loss_collector.append(loss.item())
@@ -421,7 +480,10 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
             net[1].to(device)
             net[2].to(device)
     else:
-        net.to(device)
+        #net.to(device)
+        net[0].to(device)
+        net[1].to(device)
+        net[2].to(device)
 
     logger.info(' ** Training complete **')
     return train_acc, test_acc
@@ -441,41 +503,94 @@ def train_net_fedprox(net_id, net, global_net, train_dataloader, test_dataloader
 
 
     if args_optimizer == 'adam':
-        optimizer = optim.Adam(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, weight_decay=args.reg)
-    elif args_optimizer == 'amsgrad':
-        optimizer = optim.Adam(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, weight_decay=args.reg,
-                               amsgrad=True)
-    elif args_optimizer == 'sgd':
-        optimizer = optim.SGD(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
+        # FOR REPRODUCABILITY
+        #optimizer = optim.Adam(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, weight_decay=args.reg)
+        optimizer_a = optim.Adam(filter(lambda p: p.requires_grad, net[0].parameters()), lr=lr, weight_decay=args.reg)
+        optimizer_b = optim.Adam(filter(lambda p: p.requires_grad, net[1].parameters()), lr=lr, weight_decay=args.reg)
+        optimizer_c = optim.Adam(filter(lambda p: p.requires_grad, net[2].parameters()), lr=lr, weight_decay=args.reg)
 
+    elif args_optimizer == 'amsgrad':
+        # FOR REPRODUCABILITY
+        #optimizer = optim.Adam(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, weight_decay=args.reg,
+        #                   amsgrad=True)
+        optimizer_a = optim.Adam(filter(lambda p: p.requires_grad, net[0].parameters()), lr=lr, weight_decay=args.reg,
+                            amsgrad=True)
+        optimizer_b = optim.Adam(filter(lambda p: p.requires_grad, net[1].parameters()), lr=lr, weight_decay=args.reg,
+                            amsgrad=True)
+        optimizer_c = optim.Adam(filter(lambda p: p.requires_grad, net[2].parameters()), lr=lr, weight_decay=args.reg,
+                            amsgrad=True)
+    elif args_optimizer == 'sgd':
+        #optimizer = optim.SGD(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
+        optimizer_a = optim.SGD(filter(lambda p: p.requires_grad, net[0].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
+        optimizer_b = optim.SGD(filter(lambda p: p.requires_grad, net[1].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
+        optimizer_c = optim.SGD(filter(lambda p: p.requires_grad, net[2].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
     criterion = nn.CrossEntropyLoss().to(device)
 
     cnt = 0
     # mu = 0.001
-    global_weight_collector = list(global_net.to(device).parameters())
+    # FOR REPRODUCABILITY
+    #global_weight_collector = list(global_net.to(device).parameters())
+    global_weight_collector = list(global_net[0].to(device).parameters())
+    global_weight_collector.append(list(global_net[1].to(device).parameters()))
+    global_weight_collector.append(list(global_net[2].to(device).parameters()))
 
     for epoch in range(epochs):
         epoch_loss_collector = []
         for batch_idx, (x, target) in enumerate(train_dataloader):
             x, target = x.to(device), target.to(device)
 
-            optimizer.zero_grad()
+            # FOR REPRODUCABILITY
+            #optimizer.zero_grad()
+
+            optimizer_b.zero_grad()
+            optimizer_a.zero_grad()
+            optimizer_c.zero_grad()
+
             x.requires_grad = True
             target.requires_grad = False
             target = target.long()
 
-            out = net(x)
+            # FOR REPRODUCABILITY
+            #out = net(x)
+            out_a = net[0](x)
+            det_out_a = out_a.clone().detach().requires_grad_(True)
+
+            out_b = net[1](det_out_a)
+            det_out_b = out_b.clone().detach().requires_grad_(True)
+
+            out = net[2](det_out_b)
+
             loss = criterion(out, target)
 
             #for fedprox
             fed_prox_reg = 0.0
-            for param_index, param in enumerate(net.parameters()):
+            param_all = 0
+            for param_index, param in enumerate(net[0].parameters()):
+                param_all += 1
                 fed_prox_reg += ((mu / 2) * torch.norm((param - global_weight_collector[param_index]))**2)
+            for param_index, param in enumerate(net[1].parameters()):
+                param_all += 1
+                fed_prox_reg += ((mu / 2) * torch.norm((param_all - global_weight_collector[param_index]))**2)
+            for param_index, param in enumerate(net[2].parameters()):
+                param_all += 1
+                fed_prox_reg += ((mu / 2) * torch.norm((param_all - global_weight_collector[param_index]))**2)
             loss += fed_prox_reg
 
 
             loss.backward()
-            optimizer.step()
+            # FOR REPRODUCABILITY
+            #optimizer.step()
+            optimizer_c.step()
+
+            grad_b = det_out_b.grad.clone().detach()
+            out_b.backward(grad_b)
+            optimizer_b.step()
+
+            grad_a = det_out_a.grad.clone().detach()
+            out_a.backward(grad_a)
+
+            optimizer_a.step()
+
 
             cnt += 1
             epoch_loss_collector.append(loss.item())
@@ -496,7 +611,10 @@ def train_net_fedprox(net_id, net, global_net, train_dataloader, test_dataloader
     logger.info('>> Training accuracy: %f' % train_acc)
     logger.info('>> Test accuracy: %f' % test_acc)
 
-    net.to('cpu')
+    #net.to(device)
+    net[0].to(device)
+    net[1].to(device)
+    net[2].to(device)
     logger.info(' ** Training complete **')
     return train_acc, test_acc
 
@@ -786,7 +904,11 @@ def local_train_net(nets, selected, args, net_dataidx_map, test_dl = None, devic
             net[2].to(device)
             adhoc = True
         else:
-            net.to(device)
+            #net.to(device)
+            #FOR REPRODUCABILITY
+            net[0].to(device)
+            net[1].to(device)
+            net[2].to(device)
             adhoc = False
 
         noise_level = args.noise
@@ -839,7 +961,11 @@ def local_train_net_fedprox(nets, selected, global_model, args, net_dataidx_map,
 
         logger.info("Training network %s. n_training: %d" % (str(net_id), len(dataidxs)))
         # move the model to cuda device:
-        net.to(device)
+        #net.to(device)
+        #FOR REPRODUCABILITY
+        net[0].to(device)
+        net[1].to(device)
+        net[2].to(device)
 
         noise_level = args.noise
         if net_id == args.n_parties - 1:
@@ -1308,16 +1434,27 @@ if __name__ == '__main__':
 
     elif args.alg == 'fedprox':
         logger.info("Initializing nets")
+        print("Initializing nets")
         nets, local_model_meta_data, layer_type = init_nets(args.net_config, args.dropout_p, args.n_parties, args)
         global_models, global_model_meta_data, global_layer_type = init_nets(args.net_config, 0, 1, args)
         global_model = global_models[0]
-
+        print('cool')
+        '''
         global_para = global_model.state_dict()
 
         if args.is_same_initial:
             for net_id, net in nets.items():
                 net.load_state_dict(global_para)
-
+        '''
+        global_para_a = global_model[0].state_dict()
+        global_para_b = global_model[1].state_dict()
+        global_para_c = global_model[2].state_dict()
+        if args.is_same_initial:
+            for net_id, net in nets.items():
+                net[0].load_state_dict(global_para_a)
+                net[1].load_state_dict(global_para_b)
+                net[2].load_state_dict(global_para_c)
+        print("start round")
         for round in range(args.comm_round):
             logger.info("in comm round:" + str(round))
 
@@ -1325,7 +1462,12 @@ if __name__ == '__main__':
             np.random.shuffle(arr)
             selected = arr[:int(args.n_parties * args.sample)]
 
-            global_para = global_model.state_dict()
+            #global_para = global_model.state_dict()
+            global_para_a = global_model[0].state_dict()
+            global_para_b = global_model[1].state_dict()
+            global_para_c = global_model[2].state_dict()
+
+            '''
             if round == 0:
                 if args.is_same_initial:
                     for idx in selected:
@@ -1333,14 +1475,48 @@ if __name__ == '__main__':
             else:
                 for idx in selected:
                     nets[idx].load_state_dict(global_para)
+            '''
+            if round == 0:
+                if args.is_same_initial:
+                    for idx in selected:
+                        nets[idx][0].load_state_dict(global_para_a)
+                        nets[idx][1].load_state_dict(global_para_b)
+                        nets[idx][2].load_state_dict(global_para_c)
+            else:
+                for idx in selected:
+                    nets[idx][0].load_state_dict(global_para_a)
+                    nets[idx][1].load_state_dict(global_para_b)
+                    nets[idx][2].load_state_dict(global_para_c)
 
             local_train_net_fedprox(nets, selected, global_model, args, net_dataidx_map, test_dl = test_dl_global, device=device)
-            global_model.to('cpu')
-
+            global_model[0].to('cpu')
+            global_model[1].to('cpu')
+            global_model[2].to('cpu')
+            
             # update global model
             total_data_points = sum([len(net_dataidx_map[r]) for r in selected])
             fed_avg_freqs = [len(net_dataidx_map[r]) / total_data_points for r in selected]
-
+            # Aggregation
+            for idx in range(len(selected)):
+                net_para_a = nets[selected[idx]][0].cpu().state_dict()
+                net_para_b = nets[selected[idx]][1].cpu().state_dict()
+                net_para_c = nets[selected[idx]][2].cpu().state_dict()
+                if idx == 0:
+                    for key in net_para_a:
+                        global_para_a[key] = net_para_a[key] * fed_avg_freqs[idx]
+                    for key in net_para_b:
+                        global_para_b[key] = net_para_b[key] * fed_avg_freqs[idx]
+                    for key in net_para_c:
+                        global_para_c[key] = net_para_c[key] * fed_avg_freqs[idx]
+                else:
+                    for key in net_para_a:
+                        global_para_a[key] += net_para_a[key] * fed_avg_freqs[idx]
+                    for key in net_para_b:
+                        global_para_b[key] += net_para_b[key] * fed_avg_freqs[idx]
+                    for key in net_para_c:
+                        global_para_c[key] += net_para_c[key] * fed_avg_freqs[idx]
+            
+            '''
             for idx in range(len(selected)):
                 net_para = nets[selected[idx]].cpu().state_dict()
                 if idx == 0:
@@ -1357,6 +1533,7 @@ if __name__ == '__main__':
 
 
             global_model.to(device)
+            '''
             train_acc = compute_accuracy(global_model, train_dl_global, device=device)
             test_acc, conf_matrix = compute_accuracy(global_model, test_dl_global, get_confusion_matrix=True, device=device)
 
