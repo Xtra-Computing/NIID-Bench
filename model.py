@@ -206,18 +206,69 @@ class SimpleCNN_header(nn.Module):
 class SimpleCNN(nn.Module):
     def __init__(self, input_dim, hidden_dims, output_dim=10, first_cut=-1, last_cut=-1):
         super(SimpleCNN, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-
-        # for now, we hard coded this network
-        # i.e. we fix the number of hidden layers i.e. 2 layers
-        self.fc1 = nn.Linear(input_dim, hidden_dims[0])
-        self.fc2 = nn.Linear(hidden_dims[0], hidden_dims[1])
-        self.fc3 = nn.Linear(hidden_dims[1], output_dim)
-
         self.first_cut = first_cut
         self.last_cut = last_cut
+        start = False
+        end = False
+        layer = 0
+        if self.last_cut == -1:
+            end = True
+
+        if self.first_cut == -1:
+            start = True
+
+        # layer 0
+        if start or ((not start) and (self.first_cut == layer)): #when to start
+            # have already started, or just started
+            if end or ((not end) and (self.last_cut > layer)):
+                # check we are not in end
+                self.conv1 = nn.Conv2d(3, 6, 5)
+                self.pool = nn.MaxPool2d(2, 2)
+                start = True
+            else:
+                # reached end
+                return 
+        layer += 1
+
+        # layer 1
+        if start or (not start and (self.first_cut == layer)): #when to start
+            # have already started, or just started
+            if end or (not end and (self.last_cut > layer)):
+                # check we are not in end
+                self.conv2 = nn.Conv2d(6, 16, 5)
+                self.pool = nn.MaxPool2d(2, 2)
+                start = True
+            else:
+                # reached end
+                return 
+        layer += 1
+
+        # layer 2
+        if start or (not start and (self.first_cut == layer)): #when to start
+            # have already started, or just started
+            if end or (not end and (self.last_cut > layer)):
+                # check we are not in end
+                self.fc1 = nn.Linear(input_dim, hidden_dims[0])
+                start = True
+            else:
+                # reached end
+                return 
+        layer += 1    
+
+        # layer 3
+        if start or (not start and (self.first_cut == layer)): #when to start
+            # have already started, or just started
+            if end or (not end and (self.last_cut > layer)):
+                # check we are not in end
+                self.fc2 = nn.Linear(hidden_dims[0], hidden_dims[1])
+                start = True
+            else:
+                # reached end
+                return 
+        layer += 1
+        
+        # layer 4
+        self.fc3 = nn.Linear(hidden_dims[1], output_dim)
 
     def forward(self, x):
         layer = 0

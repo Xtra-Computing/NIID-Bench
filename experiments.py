@@ -530,9 +530,11 @@ def train_net_fedprox(net_id, net, global_net, train_dataloader, test_dataloader
     # mu = 0.001
     # FOR REPRODUCABILITY
     #global_weight_collector = list(global_net.to(device).parameters())
-    global_weight_collector = list(global_net[0].to(device).parameters())
-    global_weight_collector.append(list(global_net[1].to(device).parameters()))
-    global_weight_collector.append(list(global_net[2].to(device).parameters()))
+    global_weight_collector = [list(global_net[0].to(device).parameters()), 
+                               list(global_net[1].to(device).parameters()),
+                               list(global_net[2].to(device).parameters())]
+    #global_weight_collector.append()
+    #global_weight_collector.append()
 
     for epoch in range(epochs):
         epoch_loss_collector = []
@@ -559,21 +561,19 @@ def train_net_fedprox(net_id, net, global_net, train_dataloader, test_dataloader
             det_out_b = out_b.clone().detach().requires_grad_(True)
 
             out = net[2](det_out_b)
-
             loss = criterion(out, target)
-
             #for fedprox
             fed_prox_reg = 0.0
             param_all = 0
             for param_index, param in enumerate(net[0].parameters()):
                 param_all += 1
-                fed_prox_reg += ((mu / 2) * torch.norm((param - global_weight_collector[param_index]))**2)
+                fed_prox_reg += ((mu / 2) * torch.norm((param - global_weight_collector[0][param_index]))**2)
             for param_index, param in enumerate(net[1].parameters()):
                 param_all += 1
-                fed_prox_reg += ((mu / 2) * torch.norm((param_all - global_weight_collector[param_index]))**2)
+                fed_prox_reg += ((mu / 2) * torch.norm((param - global_weight_collector[1][param_index]))**2)
             for param_index, param in enumerate(net[2].parameters()):
                 param_all += 1
-                fed_prox_reg += ((mu / 2) * torch.norm((param_all - global_weight_collector[param_index]))**2)
+                fed_prox_reg += ((mu / 2) * torch.norm((param - global_weight_collector[2][param_index]))**2)
             loss += fed_prox_reg
 
 
@@ -1507,6 +1507,9 @@ if __name__ == '__main__':
         global_para_a = global_model[0].state_dict()
         global_para_b = global_model[1].state_dict()
         global_para_c = global_model[2].state_dict()
+        print(global_para_a.keys())
+        print(global_para_b.keys())
+        print(global_para_c.keys())
         if args.is_same_initial:
             for net_id, net in nets.items():
                 net[0].load_state_dict(global_para_a)
@@ -1573,7 +1576,18 @@ if __name__ == '__main__':
                         global_para_b[key] += net_para_b[key] * fed_avg_freqs[idx]
                     for key in net_para_c:
                         global_para_c[key] += net_para_c[key] * fed_avg_freqs[idx]
+                        
             
+            global_model[0].load_state_dict(global_para_a)
+            global_model[1].load_state_dict(global_para_b)
+            global_model[2].load_state_dict(global_para_c)
+
+            logger.info('global n_training: %d' % len(train_dl_global))
+            logger.info('global n_test: %d' % len(test_dl_global))
+            
+            global_model[0].to(device)
+            global_model[1].to(device)
+            global_model[2].to(device)
             '''
             for idx in range(len(selected)):
                 net_para = nets[selected[idx]].cpu().state_dict()
