@@ -1198,15 +1198,15 @@ def local_train_net_scaffold(nets, selected, global_model, c_nets, c_global, arg
             c_global_para[0][key] += total_delta_a[key]
     c_global[0].load_state_dict(c_global_para[0])
 
-    for key in c_global_para[2]:
-        if c_global_para[2][key].type() == 'torch.LongTensor':
-            c_global_para[2][key] += total_delta_b[key].type(torch.LongTensor)
-        elif c_global_para[2][key].type() == 'torch.cuda.LongTensor':
-            c_global_para[2][key] += total_delta_b[key].type(torch.cuda.LongTensor)
+    for key in c_global_para[1]:
+        if c_global_para[1][key].type() == 'torch.LongTensor':
+            c_global_para[1][key] += total_delta_b[key].type(torch.LongTensor)
+        elif c_global_para[1][key].type() == 'torch.cuda.LongTensor':
+            c_global_para[1][key] += total_delta_b[key].type(torch.cuda.LongTensor)
         else:
             #print(c_global_para[key].type())
-            c_global_para[2][key] += total_delta_b[key]
-    c_global[2].load_state_dict(c_global_para[2])
+            c_global_para[1][key] += total_delta_b[key]
+    c_global[1].load_state_dict(c_global_para[1])
 
     for key in c_global_para[2]:
         if c_global_para[2][key].type() == 'torch.LongTensor':
