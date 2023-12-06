@@ -584,7 +584,7 @@ def train_net_fedprox(net_id, net, global_net, train_dataloader, test_dataloader
 
             grad_b = det_out_b.grad.clone().detach()
             out_b.backward(grad_b)
-            optimizer_b.step()
+            optimizer_b.st0ep()
 
             grad_a = det_out_a.grad.clone().detach()
             out_a.backward(grad_a)
@@ -628,13 +628,28 @@ def train_net_scaffold(net_id, net, global_model, c_local, c_global, train_datal
     logger.info('>> Pre-Training Test accuracy: {}'.format(test_acc))
 
     if args_optimizer == 'adam':
-        optimizer = optim.Adam(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, weight_decay=args.reg)
+        # FOR REPRODUCABILITY
+        #optimizer = optim.Adam(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, weight_decay=args.reg)
+        optimizer_a = optim.Adam(filter(lambda p: p.requires_grad, net[0].parameters()), lr=lr, weight_decay=args.reg)
+        optimizer_b = optim.Adam(filter(lambda p: p.requires_grad, net[1].parameters()), lr=lr, weight_decay=args.reg)
+        optimizer_c = optim.Adam(filter(lambda p: p.requires_grad, net[2].parameters()), lr=lr, weight_decay=args.reg)
     elif args_optimizer == 'amsgrad':
-        optimizer = optim.Adam(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, weight_decay=args.reg,
-                               amsgrad=True)
+        # FOR REPRODUCABILITY
+        #optimizer = optim.Adam(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, weight_decay=args.reg,
+        #                   amsgrad=True)
+        optimizer_a = optim.Adam(filter(lambda p: p.requires_grad, net[0].parameters()), lr=lr, weight_decay=args.reg,
+                            amsgrad=True)
+        optimizer_b = optim.Adam(filter(lambda p: p.requires_grad, net[1].parameters()), lr=lr, weight_decay=args.reg,
+                            amsgrad=True)
+        optimizer_c = optim.Adam(filter(lambda p: p.requires_grad, net[2].parameters()), lr=lr, weight_decay=args.reg,
+                            amsgrad=True)        
     elif args_optimizer == 'sgd':
-        optimizer = optim.SGD(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
+        #optimizer = optim.SGD(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
+        optimizer_a = optim.SGD(filter(lambda p: p.requires_grad, net[0].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
+        optimizer_b = optim.SGD(filter(lambda p: p.requires_grad, net[1].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
+        optimizer_c = optim.SGD(filter(lambda p: p.requires_grad, net[2].parameters()), lr=lr, momentum=args.rho, weight_decay=args.reg)
     criterion = nn.CrossEntropyLoss().to(device)
+
 
     cnt = 0
     if type(train_dataloader) == type([1]):
@@ -642,14 +657,28 @@ def train_net_scaffold(net_id, net, global_model, c_local, c_global, train_datal
     else:
         train_dataloader = [train_dataloader]
 
-    #writer = SummaryWriter()
+    #c_global.to(device)
+    c_global[0].to(device)
+    c_global[1].to(device)
+    c_global[2].to(device)
 
-    c_local.to(device)
-    c_global.to(device)
-    global_model.to(device)
+    #c_local.to(device)
+    c_local[0].to(device)
+    c_local[1].to(device)
+    c_local[2].to(device)
 
-    c_global_para = c_global.state_dict()
-    c_local_para = c_local.state_dict()
+    #global_model.to(device)
+    global_model[0].to(device)
+    global_model[1].to(device)
+    global_model[2].to(device)
+
+
+    c_global_para = [c_global[0].state_dict(),
+                     c_global[1].state_dict(),
+                     c_global[2].state_dict()]
+    c_local_para = [c_local[0].state_dict(),
+                    c_local[1].state_dict(),
+                    c_local[2].state_dict()]
 
     for epoch in range(epochs):
         epoch_loss_collector = []
@@ -657,21 +686,48 @@ def train_net_scaffold(net_id, net, global_model, c_local, c_global, train_datal
             for batch_idx, (x, target) in enumerate(tmp):
                 x, target = x.to(device), target.to(device)
 
-                optimizer.zero_grad()
+                # FOR REPRODUCABILITY
+                #optimizer.zero_grad()
+
+                optimizer_b.zero_grad()
+                optimizer_a.zero_grad()
+                optimizer_c.zero_grad()
+                
                 x.requires_grad = True
                 target.requires_grad = False
                 target = target.long()
 
-                out = net(x)
+                    #out = net(x)
+                out_a = net[0](x)
+                det_out_a = out_a.clone().detach().requires_grad_(True)
+
+                out_b = net[1](det_out_a)
+                det_out_b = out_b.clone().detach().requires_grad_(True)
+
+                out = net[2](det_out_b)
                 loss = criterion(out, target)
-
                 loss.backward()
-                optimizer.step()
 
-                net_para = net.state_dict()
-                for key in net_para:
-                    net_para[key] = net_para[key] - args.lr * (c_global_para[key] - c_local_para[key])
-                net.load_state_dict(net_para)
+                # FOR REPRODUCABILITY
+                #optimizer.step()
+                optimizer_c.step()
+
+                grad_b = det_out_b.grad.clone().detach()
+                out_b.backward(grad_b)
+                optimizer_b.step()
+
+                grad_a = det_out_a.grad.clone().detach()
+                out_a.backward(grad_a)
+
+                optimizer_a.step()
+
+                net_para = [net[0].state_dict(),
+                            net[1].state_dict(),
+                            net[2].state_dict()]
+                for i in range(3):
+                    for key in net_para[i]:
+                        net_para[i][key] = net_para[i][key] - args.lr * (c_global_para[i][key] - c_local_para[i][key])
+                    net[i].load_state_dict(net_para[i])
 
                 cnt += 1
                 epoch_loss_collector.append(loss.item())
@@ -680,14 +736,24 @@ def train_net_scaffold(net_id, net, global_model, c_local, c_global, train_datal
         epoch_loss = sum(epoch_loss_collector) / len(epoch_loss_collector)
         logger.info('Epoch: %d Loss: %f' % (epoch, epoch_loss))
 
-    c_new_para = c_local.state_dict()
-    c_delta_para = copy.deepcopy(c_local.state_dict())
-    global_model_para = global_model.state_dict()
-    net_para = net.state_dict()
-    for key in net_para:
-        c_new_para[key] = c_new_para[key] - c_global_para[key] + (global_model_para[key] - net_para[key]) / (cnt * args.lr)
-        c_delta_para[key] = c_new_para[key] - c_local_para[key]
-    c_local.load_state_dict(c_new_para)
+    c_new_para = [c_local[0].state_dict(),
+                  c_local[1].state_dict(),
+                  c_local[2].state_dict()]
+    c_delta_para = [copy.deepcopy(c_local[0].state_dict()),
+                    copy.deepcopy(c_local[1].state_dict()),
+                    copy.deepcopy(c_local[2].state_dict())]
+    global_model_para = [global_model[0].state_dict(),
+                         global_model[1].state_dict(),
+                         global_model[2].state_dict()]
+    net_para = [net[0].state_dict(),
+                net[1].state_dict(),
+                net[2].state_dict()]
+    
+    for i in range(3):
+        for key in net_para[i]:
+            c_new_para[i][key] = c_new_para[i][key] - c_global_para[i][key] + (global_model_para[i][key] - net_para[i][key]) / (cnt * args.lr)
+            c_delta_para[i][key] = c_new_para[i][key] - c_local_para[i][key]
+        c_local[i].load_state_dict(c_new_para[i])
 
 
     train_acc = compute_accuracy(net, train_dataloader, device=device)
@@ -696,7 +762,10 @@ def train_net_scaffold(net_id, net, global_model, c_local, c_global, train_datal
     logger.info('>> Training accuracy: %f' % train_acc)
     logger.info('>> Test accuracy: %f' % test_acc)
 
-    net.to('cpu')
+    #net.to(device)
+    net[0].to(device)
+    net[1].to(device)
+    net[2].to(device)
     logger.info(' ** Training complete **')
     return train_acc, test_acc, c_delta_para
 
@@ -1043,11 +1112,26 @@ def local_train_net_fedprox(nets, selected, global_model, args, net_dataidx_map,
 def local_train_net_scaffold(nets, selected, global_model, c_nets, c_global, args, net_dataidx_map, test_dl = None, device="cpu"):
     avg_acc = 0.0
 
-    total_delta = copy.deepcopy(global_model.state_dict())
-    for key in total_delta:
-        total_delta[key] = 0.0
-    c_global.to(device)
-    global_model.to(device)
+    total_delta_a = copy.deepcopy(global_model[0].state_dict())
+    total_delta_b = copy.deepcopy(global_model[1].state_dict())
+    total_delta_c = copy.deepcopy(global_model[2].state_dict())
+    for key in total_delta_a:
+        total_delta_a[key] = 0.0
+    for key in total_delta_b:
+        total_delta_b[key] = 0.0
+    for key in total_delta_c:
+        total_delta_c[key] = 0.0
+    
+    #c_global.to(device)
+    c_global[0].to(device)
+    c_global[1].to(device)
+    c_global[2].to(device)
+
+    #global_model.to(device)
+    global_model[0].to(device)
+    global_model[1].to(device)
+    global_model[2].to(device)
+
     for net_id, net in nets.items():
         if net_id not in selected:
             continue
@@ -1055,9 +1139,16 @@ def local_train_net_scaffold(nets, selected, global_model, c_nets, c_global, arg
 
         logger.info("Training network %s. n_training: %d" % (str(net_id), len(dataidxs)))
         # move the model to cuda device:
-        net.to(device)
+        #net.to(device)
+        #FOR REPRODUCABILITY
+        net[0].to(device)
+        net[1].to(device)
+        net[2].to(device)
 
-        c_nets[net_id].to(device)
+        #c_nets[net_id].to(device)
+        c_nets[net_id][0].to(device)
+        c_nets[net_id][1].to(device)
+        c_nets[net_id][2].to(device)
 
         noise_level = args.noise
         if net_id == args.n_parties - 1:
@@ -1074,25 +1165,58 @@ def local_train_net_scaffold(nets, selected, global_model, c_nets, c_global, arg
 
         trainacc, testacc, c_delta_para = train_net_scaffold(net_id, net, global_model, c_nets[net_id], c_global, train_dl_local, test_dl, n_epoch, args.lr, args.optimizer, device=device)
 
-        c_nets[net_id].to('cpu')
-        for key in total_delta:
-            total_delta[key] += c_delta_para[key]
+        c_nets[net_id][0].to('cpu')
+        c_nets[net_id][1].to('cpu')
+        c_nets[net_id][2].to('cpu')
+        for key in total_delta_a:
+            total_delta_a[key] += c_delta_para[0][key]
+        for key in total_delta_b:
+            total_delta_b[key] += c_delta_para[1][key]
+        for key in total_delta_c:
+            total_delta_c[key] += c_delta_para[2][key]
 
 
         logger.info("net %d final test acc %f" % (net_id, testacc))
         avg_acc += testacc
-    for key in total_delta:
-        total_delta[key] /= args.n_parties
-    c_global_para = c_global.state_dict()
-    for key in c_global_para:
-        if c_global_para[key].type() == 'torch.LongTensor':
-            c_global_para[key] += total_delta[key].type(torch.LongTensor)
-        elif c_global_para[key].type() == 'torch.cuda.LongTensor':
-            c_global_para[key] += total_delta[key].type(torch.cuda.LongTensor)
+    for key in total_delta_a:
+        total_delta_a[key] /= args.n_parties
+    for key in total_delta_b:
+        total_delta_b[key] /= args.n_parties
+    for key in total_delta_c:
+        total_delta_c[key] /= args.n_parties
+    c_global_para = [c_global[0].state_dict(),
+                     c_global[1].state_dict(),
+                     c_global[2].state_dict()
+                     ]
+    for key in c_global_para[0]:
+        if c_global_para[0][key].type() == 'torch.LongTensor':
+            c_global_para[0][key] += total_delta_a[key].type(torch.LongTensor)
+        elif c_global_para[0][key].type() == 'torch.cuda.LongTensor':
+            c_global_para[0][key] += total_delta_a[key].type(torch.cuda.LongTensor)
         else:
             #print(c_global_para[key].type())
-            c_global_para[key] += total_delta[key]
-    c_global.load_state_dict(c_global_para)
+            c_global_para[0][key] += total_delta_a[key]
+    c_global[0].load_state_dict(c_global_para[0])
+
+    for key in c_global_para[2]:
+        if c_global_para[2][key].type() == 'torch.LongTensor':
+            c_global_para[2][key] += total_delta_b[key].type(torch.LongTensor)
+        elif c_global_para[2][key].type() == 'torch.cuda.LongTensor':
+            c_global_para[2][key] += total_delta_b[key].type(torch.cuda.LongTensor)
+        else:
+            #print(c_global_para[key].type())
+            c_global_para[2][key] += total_delta_b[key]
+    c_global[2].load_state_dict(c_global_para[2])
+
+    for key in c_global_para[2]:
+        if c_global_para[2][key].type() == 'torch.LongTensor':
+            c_global_para[2][key] += total_delta_c[key].type(torch.LongTensor)
+        elif c_global_para[2][key].type() == 'torch.cuda.LongTensor':
+            c_global_para[2][key] += total_delta_c[key].type(torch.cuda.LongTensor)
+        else:
+            #print(c_global_para[key].type())
+            c_global_para[2][key] += total_delta_c[key]
+    c_global[2].load_state_dict(c_global_para[2])
 
     avg_acc /= len(selected)
     if args.alg == 'local_training':
@@ -1622,14 +1746,32 @@ if __name__ == '__main__':
         c_nets, _, _ = init_nets(args.net_config, args.dropout_p, args.n_parties, args)
         c_globals, _, _ = init_nets(args.net_config, 0, 1, args)
         c_global = c_globals[0]
-        c_global_para = c_global.state_dict()
+        c_global_para = [c_global[0].state_dict(),
+                         c_global[1].state_dict(),
+                         c_global[2].state_dict()]
+        
         for net_id, net in c_nets.items():
-            net.load_state_dict(c_global_para)
+            for i in range(3):
+                net[i].load_state_dict(c_global_para[i])
 
+        '''
         global_para = global_model.state_dict()
+
         if args.is_same_initial:
             for net_id, net in nets.items():
                 net.load_state_dict(global_para)
+        '''
+        global_para_a = global_model[0].state_dict()
+        global_para_b = global_model[1].state_dict()
+        global_para_c = global_model[2].state_dict()
+        print(global_para_a.keys())
+        print(global_para_b.keys())
+        print(global_para_c.keys())
+        if args.is_same_initial:
+            for net_id, net in nets.items():
+                net[0].load_state_dict(global_para_a)
+                net[1].load_state_dict(global_para_b)
+                net[2].load_state_dict(global_para_c)
 
 
         for round in range(args.comm_round):
@@ -1639,7 +1781,11 @@ if __name__ == '__main__':
             np.random.shuffle(arr)
             selected = arr[:int(args.n_parties * args.sample)]
 
-            global_para = global_model.state_dict()
+            #global_para = global_model.state_dict()
+            global_para_a = global_model[0].state_dict()
+            global_para_b = global_model[1].state_dict()
+            global_para_c = global_model[2].state_dict()
+            '''
             if round == 0:
                 if args.is_same_initial:
                     for idx in selected:
@@ -1647,6 +1793,18 @@ if __name__ == '__main__':
             else:
                 for idx in selected:
                     nets[idx].load_state_dict(global_para)
+            '''
+            if round == 0:
+                if args.is_same_initial:
+                    for idx in selected:
+                        nets[idx][0].load_state_dict(global_para_a)
+                        nets[idx][1].load_state_dict(global_para_b)
+                        nets[idx][2].load_state_dict(global_para_c)
+            else:
+                for idx in selected:
+                    nets[idx][0].load_state_dict(global_para_a)
+                    nets[idx][1].load_state_dict(global_para_b)
+                    nets[idx][2].load_state_dict(global_para_c)
 
             local_train_net_scaffold(nets, selected, global_model, c_nets, c_global, args, net_dataidx_map, test_dl = test_dl_global, device=device)
             # local_train_net(nets, args, net_dataidx_map, local_split=False, device=device)
@@ -1654,7 +1812,7 @@ if __name__ == '__main__':
             # update global model
             total_data_points = sum([len(net_dataidx_map[r]) for r in selected])
             fed_avg_freqs = [len(net_dataidx_map[r]) / total_data_points for r in selected]
-
+            '''
             for idx in range(len(selected)):
                 net_para = nets[selected[idx]].cpu().state_dict()
                 if idx == 0:
@@ -1664,12 +1822,39 @@ if __name__ == '__main__':
                     for key in net_para:
                         global_para[key] += net_para[key] * fed_avg_freqs[idx]
             global_model.load_state_dict(global_para)
+            '''
+
+            # Aggregation
+            for idx in range(len(selected)):
+                net_para_a = nets[selected[idx]][0].cpu().state_dict()
+                net_para_b = nets[selected[idx]][1].cpu().state_dict()
+                net_para_c = nets[selected[idx]][2].cpu().state_dict()
+                if idx == 0:
+                    for key in net_para_a:
+                        global_para_a[key] = net_para_a[key] * fed_avg_freqs[idx]
+                    for key in net_para_b:
+                        global_para_b[key] = net_para_b[key] * fed_avg_freqs[idx]
+                    for key in net_para_c:
+                        global_para_c[key] = net_para_c[key] * fed_avg_freqs[idx]
+                else:
+                    for key in net_para_a:
+                        global_para_a[key] += net_para_a[key] * fed_avg_freqs[idx]
+                    for key in net_para_b:
+                        global_para_b[key] += net_para_b[key] * fed_avg_freqs[idx]
+                    for key in net_para_c:
+                        global_para_c[key] += net_para_c[key] * fed_avg_freqs[idx]
+            
+            global_model[0].load_state_dict(global_para_a)
+            global_model[1].load_state_dict(global_para_b)
+            global_model[2].load_state_dict(global_para_c)
 
 
             logger.info('global n_training: %d' % len(train_dl_global))
             logger.info('global n_test: %d' % len(test_dl_global))
 
-            global_model.to(device)
+            global_model[0].to(device)
+            global_model[1].to(device)
+            global_model[2].to(device)
             train_acc = compute_accuracy(global_model, train_dl_global, device=device)
             test_acc, conf_matrix = compute_accuracy(global_model, test_dl_global, get_confusion_matrix=True, device=device)
 
