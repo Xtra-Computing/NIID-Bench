@@ -584,7 +584,7 @@ def train_net_fedprox(net_id, net, global_net, train_dataloader, test_dataloader
 
             grad_b = det_out_b.grad.clone().detach()
             out_b.backward(grad_b)
-            optimizer_b.st0ep()
+            optimizer_b.step()
 
             grad_a = det_out_a.grad.clone().detach()
             out_a.backward(grad_a)
