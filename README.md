@@ -12,6 +12,12 @@ This code runs a benchmark for federated learning algorithms under non-IID data 
 
 
 ## Updates on NIID-Bench
+Our follow-up works based on NIID-Bench:
+
+* [FedOV](https://github.com/Xtra-Computing/FedOV): Towards Addressing Label Skews in One-Shot Federated Learning (ICLR 2023)
+
+* [FedConcat](https://github.com/sjtudyq/FedConcat): Exploiting Label Skew in Federated Learning with Model Concatenation (AAAI 2024)
+
 We publish NIID-Bench challenge https://niidbench.xtra.science, a benchmark to compare federated learning algorithms on comprehensive non-IID data settings. Researchers are welcome to test their algorithms on these settings, upload their codes and participate in our leaderboard!
 
 Implement `partition.py` to divide tabular datasets (csv format) into multiple files using our non-IID partitioning strategies. Column `Class` in the header is recognized as label. See an running example in `partition_to_file.sh`. The example dataset is [Credit Card Fraud Detection](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud).
