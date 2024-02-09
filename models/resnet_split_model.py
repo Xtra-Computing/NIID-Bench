@@ -155,7 +155,6 @@ class ResNet(nn.Module):
             
             if ((first_cut == -1 and last_cut == -1) or (first_cut != -1 and first_cut <= itter)): 
                 self.layers.add_module('conv5_%d'%(i+1,),resblock(filters[4], filters[4], downsample=False))
-        print(f'the itter is {itter}')
     def forward(self, input):
         if ((self.first_cut == -1) or (self.first_cut != -1 and self.first_cut <  self.total - 2)): #not empty
             input = self.layers(input)       
