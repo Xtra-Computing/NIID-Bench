@@ -332,18 +332,24 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
                     for i_helper in range(num_helpers):
                         net_params =  net[i_helper][0].state_dict()
                         tempModel[0].load_state_dict(net_params)
+
+                        tempModel[0].to(device)
                         end_a_ = end_a
                         if len(targets[i_helper]) <  end_a:
                             end_a_ = len(x_s[i_helper])
-                        out_a = tempModel[0](x_s[i_helper][start_a:end_a_])
+
+                        x = x_s[i_helper][start_a:end_a_].to(device)
+                        
+                        out_a = tempModel[0](x)
                         det_out_a = out_a.clone().detach().requires_grad_(True)
+                        det_out_a.to(device)
                         det_out_as.append(det_out_a)
                     
                     # concate activations and forward to model part b
                     det_out_a_all = torch.cat(det_out_as)
                     out_b = net[net_id][1](det_out_a_all)
                     det_out_b = out_b.clone().detach().requires_grad_(True)
-
+                    det_out_b.to(device)
                     # forward to helpers model part c
                     grad_bs = []
                     loss_ = 0
@@ -352,6 +358,8 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
                     portion_ = 0
                     for i_helper in range(num_helpers):
                         net_params =  net[i_helper][2].state_dict()
+
+                        tempModel[2].to(device)
                         tempModel[2].load_state_dict(net_params)
                         start = start + portion_#i_helper*portion
                         end = start + portion
@@ -364,27 +372,38 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
                         
                         det_out_b_ = det_out_b[start:end].clone().detach().requires_grad_(True)
                         out = tempModel[2](det_out_b_)
-                        
+                        out.to(device)
                         end_a_ = end_a
                         if len(targets[i_helper]) <  end_a:
                             end_a_ = len(targets[i_helper])
                         if targets[i_helper][start_a:end_a_].size()[0] == 0 or out.size()[0] == 0:
                             continue
-                        loss = criterion(out, targets[i_helper][start_a:end_a_])
+                        
+                        target = targets[i_helper][start_a:end_a_].to(device)
+                        loss = criterion(out, target)
                         loss.backward()
                         
                         loss_ += loss.item()                    
                         grad_b = det_out_b_.grad.clone().detach()
+                        grad_b.to(device)
                         grad_bs.append(grad_b)
                     
                     # concate the gradients and backprop to model part b
                     grad_b_all = torch.cat(grad_bs)
+
+                    grad_b_all.to(device)
+                    out_b.to(device)
+                    
                     out_b.backward(grad_b_all)
                     optimizer_b.step()
                      
                     cnt += 1
                     loss__ = loss_/num_helpers
                     epoch_loss_collector.append(loss__)
+            
+            net[net_id][0].to('cpu')
+            net[net_id][1].to('cpu')
+            net[net_id][2].to('cpu') 
             
             # end of epoch
             epoch_loss = sum(epoch_loss_collector) / len(epoch_loss_collector)
@@ -460,6 +479,10 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
 
                     cnt += 1
                     epoch_loss_collector.append(loss.item())
+
+                net[0].to('cpu')
+                net[1].to('cpu')
+                net[2].to('cpu')  
             
             # end of epoch
             epoch_loss = sum(epoch_loss_collector) / len(epoch_loss_collector)
@@ -470,20 +493,7 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
 
     logger.info('>> Training accuracy: %f' % train_acc)
     logger.info('>> Test accuracy: %f' % test_acc)
-    
-    if adhoc:
-        if data_sharing: #TODO: fix this...
-            
-            pass
-        else:
-            net[0].to(device)
-            net[1].to(device)
-            net[2].to(device)
-    else:
-        #net.to(device)
-        net[0].to(device)
-        net[1].to(device)
-        net[2].to(device)
+     
 
     logger.info(' ** Training complete **')
     return train_acc, test_acc
@@ -612,9 +622,9 @@ def train_net_fedprox(net_id, net, global_net, train_dataloader, test_dataloader
     logger.info('>> Test accuracy: %f' % test_acc)
 
     #net.to(device)
-    net[0].to(device)
-    net[1].to(device)
-    net[2].to(device)
+    net[0].to('cpu')
+    net[1].to('cpu')
+    net[2].to('cpu')
     logger.info(' ** Training complete **')
     return train_acc, test_acc
 
@@ -840,8 +850,6 @@ def train_net_fednova(net_id, net, global_model, train_dataloader, test_dataload
                 tau = tau + 1
 
                 epoch_loss_collector.append(loss.item())
-
-
         epoch_loss = sum(epoch_loss_collector) / len(epoch_loss_collector)
         logger.info('Epoch: %d Loss: %f' % (epoch, epoch_loss))
 
@@ -1271,7 +1279,6 @@ def local_train_net_fednova(nets, selected, global_model, args, net_dataidx_map,
         n_list.append(n_i)
         logger.info("net %d final test acc %f" % (net_id, testacc))
         avg_acc += testacc
-
 
     avg_acc /= len(selected)
     if args.alg == 'local_training':
@@ -1946,9 +1953,10 @@ if __name__ == '__main__':
                     nets[idx][0].load_state_dict(global_para_a)
                     nets[idx][1].load_state_dict(global_para_b)
                     nets[idx][2].load_state_dict(global_para_c)
-
+            
             _, a_list, d_list, n_list = local_train_net_fednova(nets, selected, global_model, args, net_dataidx_map, test_dl = test_dl_global, device=device)
             total_n = sum(n_list)
+
             # AGGREGATION
             d_total_round = (copy.deepcopy(global_model[0].state_dict()), 
                              copy.deepcopy(global_model[1].state_dict()), 
@@ -1985,9 +1993,7 @@ if __name__ == '__main__':
                     elif updated_model[j][key].type() == 'torch.cuda.LongTensor':
                         updated_model[j][key] -= (coeff * d_total_round[j][key]).type(torch.cuda.LongTensor)
                     else:
-                        #print(updated_model[key].type())
-                        #print((coeff*d_total_round[key].type()))
-                        updated_model[j][key] -= coeff * d_total_round[j][key]
+                        updated_model[j][key] -= (coeff * d_total_round[j][key])
                 global_model[j].load_state_dict(updated_model[j])
 
 
@@ -1995,9 +2001,9 @@ if __name__ == '__main__':
             logger.info('global n_test: %d' % len(test_dl_global))
 
             #global_model.to(device)
-            global_model[0].to('cpu')
-            global_model[1].to('cpu')
-            global_model[2].to('cpu')
+            global_model[0].to(device)
+            global_model[1].to(device)
+            global_model[2].to(device)
 
             train_acc = compute_accuracy(global_model, train_dl_global, device=device)
             test_acc, conf_matrix = compute_accuracy(global_model, test_dl_global, get_confusion_matrix=True, device=device)

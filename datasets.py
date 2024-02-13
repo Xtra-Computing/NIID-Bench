@@ -361,7 +361,7 @@ class CelebA_custom(VisionDataset):
         import zipfile
 
         if self._check_integrity():
-            print('Files already downloaded and verified')
+            print('Files already downloaded and verified!')
             return
 
         for (file_id, md5, filename) in self.file_list:

@@ -651,6 +651,10 @@ def compute_accuracy(model, dataloader, get_confusion_matrix=False, moon_model=F
             model[2].eval()
             was_training = True
 
+    model[0].to(device)
+    model[1].to(device)
+    model[2].to(device)
+
     true_labels_list, pred_labels_list = np.array([]), np.array([])
 
     if type(dataloader) == type([1]):
