@@ -412,6 +412,11 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
             train_acc = compute_accuracy(net[net_id], train_dataloader, device=device, adhoc=adhoc)
             test_acc, conf_matrix = compute_accuracy(net[net_id], test_dataloader, get_confusion_matrix=True, device=device, adhoc=adhoc)
         else:
+
+            net[0].to(device)
+            net[1].to(device)
+            net[2].to(device)
+            
             for tmp in train_dataloader:
                 for batch_idx, (x, target) in enumerate(tmp):
                     x, target = x.to(device), target.to(device)
