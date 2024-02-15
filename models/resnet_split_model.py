@@ -4,12 +4,17 @@ from torch import nn
 class ResBlock(nn.Module):
     def __init__(self, in_channels, out_channels, downsample):
         super().__init__()
+        self.downsample = downsample
         if downsample:
             self.conv1 = nn.Conv2d(
                 in_channels, out_channels, kernel_size=3, stride=2, padding=1)
             self.shortcut = nn.Sequential(
                 nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=2),
                 nn.BatchNorm2d(out_channels)
+            )
+
+            self.shortcut2 = nn.Sequential(
+                nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=2),
             )
         else:
             self.conv1 = nn.Conv2d(
@@ -22,10 +27,19 @@ class ResBlock(nn.Module):
         self.bn2 = nn.BatchNorm2d(out_channels)
 
     def forward(self, input):
-        shortcut = self.shortcut(input)
-        input = nn.ReLU()(self.bn1(self.conv1(input)))
-        input = nn.ReLU()(self.bn2(self.conv2(input)))
-        input = input + shortcut
+        if input.size(0) == 1:
+            if self.downsample:
+                shortcut = self.shortcut2(input)
+            else:
+                shortcut = self.shortcut(input)
+            input = nn.ReLU()(self.conv1(input))
+            input = nn.ReLU()(self.conv2(input))
+            input = input + shortcut
+        else:
+            shortcut = self.shortcut(input)
+            input = nn.ReLU()(self.bn1(self.conv1(input)))
+            input = nn.ReLU()(self.bn2(self.conv2(input)))
+            input = input + shortcut
         return nn.ReLU()(input)
 
 
@@ -67,6 +81,14 @@ class ResNet(nn.Module):
         
         self.first_cut = first_cut
         self.last_cut = last_cut
+        start = False
+        end = False
+
+        if self.last_cut == -1:
+            end = True
+
+        if self.first_cut == -1:
+            start = True
 
         if useBottleneck:
             filters = [64, 256, 512, 1024, 2048]
@@ -81,6 +103,7 @@ class ResNet(nn.Module):
         self.gap = torch.nn.AdaptiveAvgPool2d(1)
         self.fc = torch.nn.Linear(filters[4], outputs)
         
+        
         # from the beginning
         if first_cut == -1:
             self.layers = nn.Sequential(
@@ -94,75 +117,110 @@ class ResNet(nn.Module):
         
         itter += 1
 
-        if ((first_cut == -1 and last_cut == -1) or (first_cut != -1 and first_cut <= itter)): 
-            self.layers.add_module('conv2_1', resblock(filters[0], filters[1], downsample=False))  
+        if start or ((not start) and (self.first_cut == itter)): #when to start
+            # have already started, or just started
+            if end or ((not end) and (self.last_cut > itter)):
+                self.layers.add_module('conv2_1', resblock(filters[0], filters[1], downsample=False))  
 
+                start = True
+            else:
+                # reached end
+                return 
 
+        
         for i in range(1, repeat[0]):
             itter += 1
-            if (first_cut == -1 and last_cut != -1 and itter == last_cut):
-                return
             
-            if ((first_cut == -1 and last_cut == -1) or (first_cut != -1 and first_cut <= itter)):
-                self.layers.add_module('conv2_%d'%(i+1,), resblock(filters[1], filters[1], downsample=False))
+            if start or ((not start) and (self.first_cut == itter)): #when to start
+                # have already started, or just started
+                if end or ((not end) and (self.last_cut > itter)):
+                    self.layers.add_module('conv2_%d'%(i+1,), resblock(filters[1], filters[1], downsample=False))
+    
+                    start = True
+                else:
+                    # reached end
+                    return 
 
         
         itter += 1
-        if (first_cut == -1 and last_cut != -1 and itter == last_cut):
-            return
-        
-        if ((first_cut == -1 and last_cut == -1) or (first_cut != -1 and first_cut <= itter)): 
-            self.layers.add_module('conv3_1', resblock(filters[1], filters[2], downsample=True))
+            
+        if start or ((not start) and (self.first_cut == itter)): #when to start
+            # have already started, or just started
+            if end or ((not end) and (self.last_cut > itter)):
+                self.layers.add_module('conv3_1', resblock(filters[1], filters[2], downsample=True))
+
+                start = True
+            else:
+                # reached end
+                return 
+
         
         for i in range(1, repeat[1]):
             itter += 1
-            if (first_cut == -1 and last_cut != -1 and itter == last_cut):
-                return
+            if start or ((not start) and (self.first_cut == itter)): #when to start
+                # have already started, or just started
+                if end or ((not end) and (self.last_cut > itter)):
+                    self.layers.add_module('conv3_%d' % (i+1,), resblock(filters[2], filters[2], downsample=False))
+    
+                    start = True
+                else:
+                    # reached end
+                    return 
 
-            if ((first_cut == -1 and last_cut == -1) or (first_cut != -1 and first_cut <= itter)):
-                self.layers.add_module('conv3_%d' % (i+1,), resblock(filters[2], filters[2], downsample=False))
 
 
         itter += 1
-        if (first_cut != -1 and last_cut != -1 and itter == last_cut):
-            return
+        if start or ((not start) and (self.first_cut == itter)): #when to start
+            # have already started, or just started
+            if end or ((not end) and (self.last_cut > itter)):
+                self.layers.add_module('conv4_1', resblock(filters[2], filters[3], downsample=True))
 
-        if ((first_cut == -1 and last_cut == -1) or (first_cut != -1 and first_cut <= itter)): 
-            self.layers.add_module('conv4_1', resblock(filters[2], filters[3], downsample=True))
+                start = True
+            else:
+                # reached end
+                return 
 
         for i in range(1, repeat[2]):
             itter += 1
-            if (first_cut == -1 and last_cut != -1 and itter == last_cut):
-                return
-            
-            if (first_cut != -1 and last_cut != -1 and itter == last_cut):
-                return
+            if start or ((not start) and (self.first_cut == itter)): #when to start
+                # have already started, or just started
+                if end or ((not end) and (self.last_cut > itter)):
+                    self.layers.add_module('conv4_%d' % (i+1,), resblock(filters[3], filters[3], downsample=False))
+    
+                    start = True
+                else:
+                    # reached end
+                    return 
 
-            if ((first_cut == -1 and last_cut == -1) or (first_cut != -1 and first_cut <= itter)): 
-                self.layers.add_module('conv4_%d' % (i+1,), resblock(filters[3], filters[3], downsample=False))
 
         itter += 1
-        if (first_cut == -1 and last_cut != -1 and itter == last_cut):
-            return
-        
-        if ((first_cut == -1 and last_cut == -1) or (first_cut != -1 and first_cut <= itter)):
-            self.layers.add_module('conv5_1', resblock(filters[3], filters[4], downsample=True))
+        if start or ((not start) and (self.first_cut == itter)): #when to start
+            # have already started, or just started
+            if end or ((not end) and (self.last_cut > itter)):
+                self.layers.add_module('conv5_1', resblock(filters[3], filters[4], downsample=True))
+
+                start = True
+            else:
+                # reached end
+                return 
         
         for i in range(1, repeat[3]):
             itter += 1
-            if (first_cut == -1 and last_cut != -1 and itter == last_cut):
-                return
-            
-            if ((first_cut == -1 and last_cut == -1) or (first_cut != -1 and first_cut <= itter)): 
-                self.layers.add_module('conv5_%d'%(i+1,),resblock(filters[4], filters[4], downsample=False))
+            if start or ((not start) and (self.first_cut == itter)): #when to start
+                # have already started, or just started
+                if end or ((not end) and (self.last_cut > itter)):
+                    self.layers.add_module('conv5_%d'%(i+1,),resblock(filters[4], filters[4], downsample=False))
+    
+                    start = True
+                else:
+                    # reached end
+                    return 
     def forward(self, input):
         if ((self.first_cut == -1) or (self.first_cut != -1 and self.first_cut <  self.total - 2)): #not empty
             input = self.layers(input)       
-
         if ((self.last_cut == -1) or ((self.last_cut != -1) and self.last_cut >= self.total - 1)):
             input = self.gap(input)
             input = torch.flatten(input, start_dim=1) 
-        
         if (self.last_cut == -1):
             input = self.fc(input)
 

@@ -435,7 +435,6 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
 
                             out_b = net[1](det_out_a)
                             det_out_b = out_b.clone().detach().requires_grad_(True)
-
                             out = net[2](det_out_b)
                     else:
                         # FOR REPRODUCABILITY
@@ -1353,17 +1352,17 @@ def find_helpers(dataset, net_dataidx_map, n_parties, traindata_cls_counts):
     for i in range(n_parties):
         helpers.update({i:[i]})
     for k in range(K):
-        print(f'attribute {k}')
+        #print(f'attribute {k}')
         times = [0 for i in range(n_parties)]
         for i in range(n_parties):
             distribution = traindata_cls_counts[i]
             if k in distribution.keys():
                 times[i] = distribution[k]
-        print(times)
+        #print(times)
         order_ = np.argsort(times) # increasing order
         order = order_[::-1 ] # non-increasing order
         sorted_times = sorted(times, reverse=True)
-        print(sorted_times)
+        #print(sorted_times)
         itr = -1
         for j in range(n_parties):
             if sorted_times[j] == 0:
@@ -1391,7 +1390,7 @@ def find_helpers(dataset, net_dataidx_map, n_parties, traindata_cls_counts):
             
             if send_help not in helpers[need_help]:
                 helpers[need_help].append(send_help)
-    print(helpers)
+    #print(helpers)
     return helpers
 
 # MAIN
@@ -1638,15 +1637,15 @@ if __name__ == '__main__':
         global_para_a = global_model[0].state_dict()
         global_para_b = global_model[1].state_dict()
         global_para_c = global_model[2].state_dict()
-        print(global_para_a.keys())
-        print(global_para_b.keys())
-        print(global_para_c.keys())
+        #print(global_para_a.keys())
+        #print(global_para_b.keys())
+        #print(global_para_c.keys())
         if args.is_same_initial:
             for net_id, net in nets.items():
                 net[0].load_state_dict(global_para_a)
                 net[1].load_state_dict(global_para_b)
                 net[2].load_state_dict(global_para_c)
-        print("start round")
+        #print("start round")
         for round in range(args.comm_round):
             logger.info("in comm round:" + str(round))
 
@@ -1771,9 +1770,9 @@ if __name__ == '__main__':
         global_para_a = global_model[0].state_dict()
         global_para_b = global_model[1].state_dict()
         global_para_c = global_model[2].state_dict()
-        print(global_para_a.keys())
-        print(global_para_b.keys())
-        print(global_para_c.keys())
+        #print(global_para_a.keys())
+        #print(global_para_b.keys())
+        #(global_para_c.keys())
         if args.is_same_initial:
             for net_id, net in nets.items():
                 net[0].load_state_dict(global_para_a)
