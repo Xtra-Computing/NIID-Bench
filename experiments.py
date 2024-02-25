@@ -304,10 +304,15 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
         i_helper = 0
         if data_sharing:
             for tmps in zip(*train_dataloader):
-                batch_size = min([tmps[i][0].size()[0] for i in range(num_helpers)])  # TODO: THIS NEEDS CHECK
+                batch_size = max([tmps[i][0].size()[0] for i in range(num_helpers)])  # TODO: THIS NEEDS CHECK
+                #print(f'BATCH prev {batch_size}')
+
+                #batch_size = min([tmps[i][0].size()[0] for i in range(num_helpers)])  # TODO: THIS NEEDS CHECK
+                #print(f'BATCH new {batch_size}')
+
                 portion = int(batch_size/num_helpers)
                 if portion == 0:
-                    portion = 1
+                    portion = batch_size
                 iterations = int(batch_size/portion)
                 # get the data samples
                 x_s = []
@@ -359,8 +364,9 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
                     for i_helper in range(num_helpers):
                         net_params =  net[i_helper][2].state_dict()
 
-                        tempModel[2].to(device)
+                        
                         tempModel[2].load_state_dict(net_params)
+                        tempModel[2].to(device)
                         start = start + portion_#i_helper*portion
                         end = start + portion
                         if len(targets[i_helper]) <  end_a:
@@ -383,7 +389,7 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
                         loss = criterion(out, target)
                         loss.backward()
                         
-                        loss_ += loss.item()                    
+                        loss_ += loss.item()                  
                         grad_b = det_out_b_.grad.clone().detach()
                         grad_b.to(device)
                         grad_bs.append(grad_b)
@@ -1395,7 +1401,7 @@ def find_helpers(dataset, net_dataidx_map, n_parties, traindata_cls_counts):
             
             if send_help not in helpers[need_help]:
                 helpers[need_help].append(send_help)
-    #print(helpers)
+    print(helpers)
     return helpers
 
 # MAIN
