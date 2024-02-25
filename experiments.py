@@ -304,12 +304,12 @@ def train_net(net_id, net, train_dataloader, test_dataloader, epochs, lr, args_o
         i_helper = 0
         if data_sharing:
             for tmps in zip(*train_dataloader):
-                batch_size = max([tmps[i][0].size()[0] for i in range(num_helpers)])  # TODO: THIS NEEDS CHECK
+                batch_size = min([tmps[i][0].size()[0] for i in range(num_helpers)])  # TODO: THIS NEEDS CHECK
                 #print(f'BATCH prev {batch_size}')
 
                 #batch_size = min([tmps[i][0].size()[0] for i in range(num_helpers)])  # TODO: THIS NEEDS CHECK
                 #print(f'BATCH new {batch_size}')
-
+                
                 portion = int(batch_size/num_helpers)
                 if portion == 0:
                     portion = batch_size
