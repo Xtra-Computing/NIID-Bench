@@ -12,10 +12,6 @@ class ResBlock(nn.Module):
                 nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=2),
                 nn.BatchNorm2d(out_channels)
             )
-
-            self.shortcut2 = nn.Sequential(
-                nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=2),
-            )
         else:
             self.conv1 = nn.Conv2d(
                 in_channels, out_channels, kernel_size=3, stride=1, padding=1)
@@ -27,19 +23,13 @@ class ResBlock(nn.Module):
         self.bn2 = nn.BatchNorm2d(out_channels)
 
     def forward(self, input):
-        if input.size(0) == 1:
-            if self.downsample:
-                shortcut = self.shortcut2(input)
-            else:
-                shortcut = self.shortcut(input)
-            input = nn.ReLU()(self.conv1(input))
-            input = nn.ReLU()(self.conv2(input))
-            input = input + shortcut
-        else:
-            shortcut = self.shortcut(input)
-            input = nn.ReLU()(self.bn1(self.conv1(input)))
-            input = nn.ReLU()(self.bn2(self.conv2(input)))
-            input = input + shortcut
+        
+        shortcut = self.shortcut(input)
+        input = nn.ReLU()(self.bn1(self.conv1(input)))
+        # PRINT HERE - cov2_1 conv 4_1 and conv 5_1
+        input = nn.ReLU()(self.bn2(self.conv2(input)))
+        input = input + shortcut
+
         return nn.ReLU()(input)
 
 
@@ -98,10 +88,6 @@ class ResNet(nn.Module):
         self.total = 3
         for i in repeat:
             self.total = self.total + i
-
-        # last layers
-        self.gap = torch.nn.AdaptiveAvgPool2d(1)
-        self.fc = torch.nn.Linear(filters[4], outputs)
         
         
         # from the beginning
@@ -215,6 +201,29 @@ class ResNet(nn.Module):
                 else:
                     # reached end
                     return 
+                
+        # last layers
+        itter += 1
+        if start or ((not start) and (self.first_cut == itter)): #when to start
+            # have already started, or just started
+            if end or ((not end) and (self.last_cut > itter)):
+                self.gap = torch.nn.AdaptiveAvgPool2d(1)
+                start = True
+            else:
+                # reached end
+                return
+        
+        itter += 1
+        if start or ((not start) and (self.first_cut == itter)): #when to start
+            # have already started, or just started
+            if end or ((not end) and (self.last_cut > itter)):
+                self.fc = torch.nn.Linear(filters[4], outputs)
+                start = True
+            else:
+                # reached end
+                return 
+
+        
     def forward(self, input):
         if ((self.first_cut == -1) or (self.first_cut != -1 and self.first_cut <  self.total - 2)): #not empty
             input = self.layers(input)       
